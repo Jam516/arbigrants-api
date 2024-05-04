@@ -65,7 +65,6 @@ LLAMA_API = "https://api.llama.fi"
 #       )
 #       return None, 500
 
-
 # async def get_tvls(slugs, slugs_dict):
 #   # Create a map from slug to dictionary for easy update
 #   slug_map = {d['SLUG']: d for d in slugs_dict}
@@ -91,7 +90,7 @@ LLAMA_API = "https://api.llama.fi"
 @app.route('/overview')
 @cache.memoize(make_name=make_cache_key)
 def overview():
-  timeframe = request.args.get('timeframe', '{time}')
+  timeframe = request.args.get('timeframe', 'month')
 
   actives_24h = execute_sql('''
   SELECT COUNT(DISTINCT FROM_ADDRESS) as active_wallets
@@ -191,7 +190,7 @@ def overview():
   LEFT JOIN grantees g
   ON t.date = g.date
   ''',
-                                      time=timeframe)
+                                time=timeframe)
 
   accounts_chart = execute_sql('''
   with total AS (
@@ -222,7 +221,7 @@ def overview():
   LEFT JOIN grantees g
   ON t.date = g.date
   ''',
-                                   time=timeframe)
+                               time=timeframe)
 
   current_time = datetime.now().strftime('%d/%m/%y %H:%M')
 
@@ -239,6 +238,7 @@ def overview():
   }
 
   return jsonify(response_data)
+
 
 if __name__ == '__main__':
   app.run(host='0.0.0.0', port=81)
