@@ -126,15 +126,15 @@ def overview():
   actives_growth_7d = execute_sql('''
   WITH active_wallet_counts AS (
       SELECT
-          COUNT(DISTINCT CASE WHEN BLOCK_TIMESTAMP >= current_timestamp() - interval '7 day' THEN FROM_ADDRESS END) as past_{time}_wallets,
-          COUNT(DISTINCT CASE WHEN BLOCK_TIMESTAMP < current_timestamp() - interval '7 day' AND BLOCK_TIMESTAMP >= current_timestamp() - interval '14 day' THEN FROM_ADDRESS END) as {time}_before_wallets
+          COUNT(DISTINCT CASE WHEN BLOCK_TIMESTAMP >= current_timestamp() - interval '7 day' THEN FROM_ADDRESS END) as past_week_wallets,
+          COUNT(DISTINCT CASE WHEN BLOCK_TIMESTAMP < current_timestamp() - interval '7 day' AND BLOCK_TIMESTAMP >= current_timestamp() - interval '14 day' THEN FROM_ADDRESS END) as week_before_wallets
       FROM ARBITRUM.RAW.TRANSACTIONS t
       INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
       ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
       AND BLOCK_TIMESTAMP >= current_timestamp() - interval '14 day'
   )
   SELECT
-      ROUND((100 * (past_{time}_wallets / NULLIF({time}_before_wallets, 0)) - 100), 1) AS {time}ly_growth
+      ROUND((100 * (past_week_wallets / NULLIF(week_before_wallets, 0)) - 100), 1) AS weekly_growth
   FROM active_wallet_counts;
   ''')
 
