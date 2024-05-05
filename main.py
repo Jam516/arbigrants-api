@@ -164,7 +164,7 @@ def overview():
   gas_spend_chart = execute_sql('''
   with total AS (
   SELECT 
-  DATE_TRUNC('{time}',BLOCK_TIMESTAMP) AS date,
+  TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
   'total' as category,
   SUM((RECEIPT_EFFECTIVE_GAS_PRICE * RECEIPT_GAS_USED)/1e18) AS gas_spend
   FROM ARBITRUM.RAW.TRANSACTIONS
@@ -174,7 +174,7 @@ def overview():
   
   , grantees AS (
   SELECT 
-  DATE_TRUNC('{time}',BLOCK_TIMESTAMP) AS date,
+  TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
   'grantees' as category,
   SUM((RECEIPT_EFFECTIVE_GAS_PRICE * RECEIPT_GAS_USED)/1e18) AS gas_spend_grantees
   FROM ARBITRUM.RAW.TRANSACTIONS t
@@ -194,7 +194,7 @@ def overview():
   accounts_chart = execute_sql('''
   with total AS (
   SELECT 
-  DATE_TRUNC('{time}',BLOCK_TIMESTAMP) AS date,
+  TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
   'total' as category,
   COUNT(DISTINCT FROM_ADDRESS) AS active_wallets
   FROM ARBITRUM.RAW.TRANSACTIONS
@@ -204,7 +204,7 @@ def overview():
   
   , grantees AS (
   SELECT 
-  DATE_TRUNC('{time}',BLOCK_TIMESTAMP) AS date,
+  TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
   'grantees' as category,
   COUNT(DISTINCT FROM_ADDRESS) AS active_wallets
   FROM ARBITRUM.RAW.TRANSACTIONS t
