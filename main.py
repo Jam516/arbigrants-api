@@ -165,30 +165,29 @@ def overview():
   with total AS (
   SELECT 
   DATE_TRUNC('{time}',BLOCK_TIMESTAMP) AS date,
-  SUM((RECEIPT_EFFECTIVE_GAS_PRICE * RECEIPT_GAS_USED)/1e18) AS gas_spend_total
+  'total' as category,
+  SUM((RECEIPT_EFFECTIVE_GAS_PRICE * RECEIPT_GAS_USED)/1e18) AS gas_spend
   FROM ARBITRUM.RAW.TRANSACTIONS
   WHERE BLOCK_TIMESTAMP > '2023-01-01'
-  GROUP BY 1
+  GROUP BY 1,2
   )
   
   , grantees AS (
   SELECT 
   DATE_TRUNC('{time}',BLOCK_TIMESTAMP) AS date,
+  'grantees' as category,
   SUM((RECEIPT_EFFECTIVE_GAS_PRICE * RECEIPT_GAS_USED)/1e18) AS gas_spend_grantees
   FROM ARBITRUM.RAW.TRANSACTIONS t
   INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
   ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
   AND BLOCK_TIMESTAMP > '2023-01-01'
-  GROUP BY 1
+  GROUP BY 1,2
   )
   
-  SELECT
-  t.date,
-  t.gas_spend_total,
-  COALESCE(g.gas_spend_grantees,0) AS gas_spend_grantees
-  FROM total t
-  LEFT JOIN grantees g
-  ON t.date = g.date
+  SELECT *
+  FROM total
+  UNION ALL SELECT *
+  FROM grantees
   ''',
                                 time=timeframe)
 
@@ -196,30 +195,28 @@ def overview():
   with total AS (
   SELECT 
   DATE_TRUNC('{time}',BLOCK_TIMESTAMP) AS date,
-  COUNT(DISTINCT FROM_ADDRESS) AS active_wallets_total
+  'total' as category,
+  COUNT(DISTINCT FROM_ADDRESS) AS active_wallets
   FROM ARBITRUM.RAW.TRANSACTIONS
   WHERE BLOCK_TIMESTAMP > '2023-01-01'
-  GROUP BY 1
+  GROUP BY 1,2
   )
   
   , grantees AS (
   SELECT 
   DATE_TRUNC('{time}',BLOCK_TIMESTAMP) AS date,
-  COUNT(DISTINCT FROM_ADDRESS) AS active_wallets_grantees
+  'grantees' as category,
+  COUNT(DISTINCT FROM_ADDRESS) AS active_wallets
   FROM ARBITRUM.RAW.TRANSACTIONS t
   INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
   ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
   AND BLOCK_TIMESTAMP > '2023-01-01'
-  GROUP BY 1
+  GROUP BY 1,2
   )
   
-  SELECT
-  t.date,
-  t.active_wallets_total,
-  COALESCE(g.active_wallets_grantees,0) AS active_wallets_grantees
-  FROM total t
-  LEFT JOIN grantees g
-  ON t.date = g.date
+  SELECT * FROM total
+  UNION ALL 
+  SELECT * FROM grantees
   ''',
                                time=timeframe)
 
