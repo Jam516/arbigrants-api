@@ -163,14 +163,14 @@ def overview():
 
   gas_spend_chart = execute_sql('''
   SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_GAS_SPEND
-  WHERE DATE > '2023-01-01'
+  WHERE DATE > '2024-01-01'
   ORDER BY DATE
   ''',
                                 time=timeframe)
 
   accounts_chart = execute_sql('''
   SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
-  WHERE DATE > '2023-01-01'
+  WHERE DATE > '2024-01-01'
   ORDER BY DATE 
   ''',
                                time=timeframe)
