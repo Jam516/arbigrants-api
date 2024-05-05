@@ -162,61 +162,14 @@ def overview():
   ''')
 
   gas_spend_chart = execute_sql('''
-  with total AS (
-  SELECT 
-  TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
-  'total' as category,
-  SUM((RECEIPT_EFFECTIVE_GAS_PRICE * RECEIPT_GAS_USED)/1e18) AS gas_spend
-  FROM ARBITRUM.RAW.TRANSACTIONS
-  WHERE BLOCK_TIMESTAMP > '2023-01-01'
-  GROUP BY 1,2
-  )
-  
-  , grantees AS (
-  SELECT 
-  TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
-  'grantees' as category,
-  SUM((RECEIPT_EFFECTIVE_GAS_PRICE * RECEIPT_GAS_USED)/1e18) AS gas_spend_grantees
-  FROM ARBITRUM.RAW.TRANSACTIONS t
-  INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
-  ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
-  AND BLOCK_TIMESTAMP > '2023-01-01'
-  GROUP BY 1,2
-  )
-  
-  SELECT *
-  FROM total
-  UNION ALL SELECT *
-  FROM grantees
+  SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_GAS_SPEND
+  WHERE DATE > '2023-01-01'
   ''',
                                 time=timeframe)
 
   accounts_chart = execute_sql('''
-  with total AS (
-  SELECT 
-  TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
-  'total' as category,
-  COUNT(DISTINCT FROM_ADDRESS) AS active_wallets
-  FROM ARBITRUM.RAW.TRANSACTIONS
-  WHERE BLOCK_TIMESTAMP > '2023-01-01'
-  GROUP BY 1,2
-  )
-  
-  , grantees AS (
-  SELECT 
-  TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
-  'grantees' as category,
-  COUNT(DISTINCT FROM_ADDRESS) AS active_wallets
-  FROM ARBITRUM.RAW.TRANSACTIONS t
-  INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
-  ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
-  AND BLOCK_TIMESTAMP > '2023-01-01'
-  GROUP BY 1,2
-  )
-  
-  SELECT * FROM total
-  UNION ALL 
-  SELECT * FROM grantees
+  SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
+  WHERE DATE > '2023-01-01'
   ''',
                                time=timeframe)
 
