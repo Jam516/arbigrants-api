@@ -93,72 +93,27 @@ def overview():
   timeframe = request.args.get('timeframe', 'month')
 
   actives_24h = execute_sql('''
-  SELECT COUNT(DISTINCT FROM_ADDRESS) as active_wallets
-  FROM ARBITRUM.RAW.TRANSACTIONS t
-  INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
-  ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
-  AND BLOCK_TIMESTAMP >= current_timestamp - interval '1 day' 
+  SELECT DAY_ACTIVE_WALLETS FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
   ''')
 
   actives_growth_24h = execute_sql('''
-  WITH active_wallet_counts AS (
-      SELECT
-          COUNT(DISTINCT CASE WHEN BLOCK_TIMESTAMP >= current_timestamp() - interval '1 day' THEN FROM_ADDRESS END) as past_day_wallets,
-          COUNT(DISTINCT CASE WHEN BLOCK_TIMESTAMP < current_timestamp() - interval '1 day' AND BLOCK_TIMESTAMP >= current_timestamp() - interval '2 day' THEN FROM_ADDRESS END) as day_before_wallets
-      FROM ARBITRUM.RAW.TRANSACTIONS t
-      INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
-      ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
-      AND BLOCK_TIMESTAMP >= current_timestamp() - interval '2 day'
-  )
-  SELECT
-      ROUND((100 * (past_day_wallets / NULLIF(day_before_wallets, 0)) - 100), 1) AS daily_growth
-  FROM active_wallet_counts;
+  SELECT DAY_GROWTH FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
   ''')
 
   actives_7d = execute_sql('''
-  SELECT COUNT(DISTINCT FROM_ADDRESS) as active_wallets
-  FROM ARBITRUM.RAW.TRANSACTIONS t
-  INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
-  ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
-  AND BLOCK_TIMESTAMP >= current_timestamp - interval '7 day'
+  SELECT WEEK_ACTIVE_WALLETS FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
   ''')
 
   actives_growth_7d = execute_sql('''
-  WITH active_wallet_counts AS (
-      SELECT
-          COUNT(DISTINCT CASE WHEN BLOCK_TIMESTAMP >= current_timestamp() - interval '7 day' THEN FROM_ADDRESS END) as past_week_wallets,
-          COUNT(DISTINCT CASE WHEN BLOCK_TIMESTAMP < current_timestamp() - interval '7 day' AND BLOCK_TIMESTAMP >= current_timestamp() - interval '14 day' THEN FROM_ADDRESS END) as week_before_wallets
-      FROM ARBITRUM.RAW.TRANSACTIONS t
-      INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
-      ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
-      AND BLOCK_TIMESTAMP >= current_timestamp() - interval '14 day'
-  )
-  SELECT
-      ROUND((100 * (past_week_wallets / NULLIF(week_before_wallets, 0)) - 100), 1) AS weekly_growth
-  FROM active_wallet_counts;
+  SELECT WEEK_GROWTH FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
   ''')
 
   actives_1m = execute_sql('''
-  SELECT COUNT(DISTINCT FROM_ADDRESS) as active_wallets 
-  FROM ARBITRUM.RAW.TRANSACTIONS t
-  INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
-  ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
-  AND BLOCK_TIMESTAMP >= current_timestamp - interval '1 month' 
+  SELECT MONTH_ACTIVE_WALLETS FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
   ''')
 
   actives_growth_1m = execute_sql('''
-  WITH active_wallet_counts AS (
-      SELECT
-          COUNT(DISTINCT CASE WHEN BLOCK_TIMESTAMP >= current_timestamp() - interval '1 month' THEN FROM_ADDRESS END) as past_month_wallets,
-          COUNT(DISTINCT CASE WHEN BLOCK_TIMESTAMP < current_timestamp() - interval '1 month' AND BLOCK_TIMESTAMP >= current_timestamp() - interval '2 months' THEN FROM_ADDRESS END) as month_before_wallets
-      FROM ARBITRUM.RAW.TRANSACTIONS t
-      INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
-      ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
-      AND BLOCK_TIMESTAMP >= current_timestamp() - interval '2 months'
-  )
-  SELECT
-      ROUND((100 * (past_month_wallets / NULLIF(month_before_wallets, 0)) - 100), 1) AS monthly_growth
-  FROM active_wallet_counts;
+  SELECT MONTH_GROWTH FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
   ''')
 
   gas_spend_chart = execute_sql('''
