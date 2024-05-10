@@ -93,7 +93,8 @@ def overview():
   timeframe = request.args.get('timeframe', 'month')
 
   actives_24h = execute_sql('''
-  SELECT DAY_ACTIVE_WALLETS AS ACTIVE_WALLETS FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
+  SELECT DAY_ACTIVE_WALLETS AS ACTIVE_WALLETS FROM 
+  ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
   ''')
 
   actives_growth_24h = execute_sql('''
@@ -101,7 +102,8 @@ def overview():
   ''')
 
   actives_7d = execute_sql('''
-  SELECT WEEK_ACTIVE_WALLETS AS ACTIVE_WALLETS FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
+  SELECT WEEK_ACTIVE_WALLETS AS ACTIVE_WALLETS FROM 
+  ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
   ''')
 
   actives_growth_7d = execute_sql('''
@@ -109,7 +111,8 @@ def overview():
   ''')
 
   actives_1m = execute_sql('''
-  SELECT MONTH_ACTIVE_WALLETS AS ACTIVE_WALLETS  FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
+  SELECT MONTH_ACTIVE_WALLETS AS ACTIVE_WALLETS  FROM     
+  ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
   ''')
 
   actives_growth_1m = execute_sql('''
@@ -130,6 +133,12 @@ def overview():
   ''',
                                time=timeframe)
 
+  leaderboard = execute_sql('''
+  SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
+  ORDER BY ETH_FEES DESC 
+  ''',
+                            time=timeframe)
+
   current_time = datetime.now().strftime('%d/%m/%y %H:%M')
 
   response_data = {
@@ -142,6 +151,7 @@ def overview():
     "actives_growth_1m": actives_growth_1m,
     "gas_spend_chart": gas_spend_chart,
     "accounts_chart": accounts_chart,
+    "leaderboard": leaderboard
   }
 
   return jsonify(response_data)
