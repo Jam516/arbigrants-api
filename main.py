@@ -92,31 +92,34 @@ LLAMA_API = "https://api.llama.fi"
 def overview():
   timeframe = request.args.get('timeframe', 'month')
 
-  actives_24h = execute_sql('''
+  wallets_stat = execute_sql('''
   SELECT DAY_ACTIVE_WALLETS AS ACTIVE_WALLETS FROM 
-  ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
+  ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
   ''')
 
-  actives_growth_24h = execute_sql('''
-  SELECT DAY_GROWTH FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
+  wallets_pct_stat = execute_sql('''
+  SELECT PCT_DAY_ACTIVE_WALLETS AS PCT_WALLETS FROM     
+  ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
   ''')
 
-  actives_7d = execute_sql('''
-  SELECT WEEK_ACTIVE_WALLETS AS ACTIVE_WALLETS FROM 
-  ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
+  txns_stat = execute_sql('''
+  SELECT DAY_TRANSACTIONS AS TRANSACTIONS FROM 
+  ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
   ''')
 
-  actives_growth_7d = execute_sql('''
-  SELECT WEEK_GROWTH FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
+  txns_pct_stat = execute_sql('''
+  SELECT PCT_DAY_TRANSACTIONS AS PCT_TRANSACTIONS FROM 
+  ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
   ''')
 
-  actives_1m = execute_sql('''
-  SELECT MONTH_ACTIVE_WALLETS AS ACTIVE_WALLETS  FROM     
-  ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
+  gas_stat = execute_sql('''
+  SELECT DAY_GAS_SPEND AS GAS_SPEND FROM     
+  ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
   ''')
 
-  actives_growth_1m = execute_sql('''
-  SELECT MONTH_GROWTH FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_ACTIVE_WALLET_SUMMARY
+  gas_pct_stat = execute_sql('''
+  SELECT PCT_DAY_GAS_SPEND AS PCT_GAS_SPEND FROM 
+  ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
   ''')
 
   gas_spend_chart = execute_sql('''
@@ -143,12 +146,12 @@ def overview():
 
   response_data = {
     "time": current_time,
-    "actives_24h": actives_24h,
-    "actives_growth_24h": actives_growth_24h,
-    "actives_7d": actives_7d,
-    "actives_growth_7d": actives_growth_7d,
-    "actives_1m": actives_1m,
-    "actives_growth_1m": actives_growth_1m,
+    "wallets_stat": wallets_stat,
+    "wallets_pct_stat": wallets_pct_stat,
+    "txns_stat": txns_stat,
+    "txns_pct_stat": txns_pct_stat,
+    "gas_stat": gas_stat,
+    "gas_pct_stat": gas_pct_stat,
     "gas_spend_chart": gas_spend_chart,
     "accounts_chart": accounts_chart,
     "leaderboard": leaderboard
