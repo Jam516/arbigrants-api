@@ -93,34 +93,34 @@ def overview():
   timeframe = request.args.get('timeframe', 'month')
 
   wallets_stat = execute_sql('''
-  SELECT DAY_ACTIVE_WALLETS AS ACTIVE_WALLETS FROM 
+  SELECT {time}_ACTIVE_WALLETS AS ACTIVE_WALLETS FROM 
   ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-  ''')
+  ''',time=timeframe)
 
   wallets_pct_stat = execute_sql('''
-  SELECT PCT_DAY_ACTIVE_WALLETS AS PCT_WALLETS FROM     
+  SELECT PCT_{time}_ACTIVE_WALLETS AS PCT_WALLETS FROM     
   ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-  ''')
+  ''',time=timeframe)
 
   txns_stat = execute_sql('''
-  SELECT DAY_TRANSACTIONS AS TRANSACTIONS FROM 
+  SELECT {time}_TRANSACTIONS AS TRANSACTIONS FROM 
   ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-  ''')
+  ''',time=timeframe)
 
   txns_pct_stat = execute_sql('''
-  SELECT PCT_DAY_TRANSACTIONS AS PCT_TRANSACTIONS FROM 
+  SELECT PCT_{time}_TRANSACTIONS AS PCT_TRANSACTIONS FROM 
   ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-  ''')
+  ''',time=timeframe)
 
   gas_stat = execute_sql('''
-  SELECT DAY_GAS_SPEND AS GAS_SPEND FROM     
+  SELECT {time}_GAS_SPEND AS GAS_SPEND FROM     
   ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-  ''')
+  ''',time=timeframe)
 
   gas_pct_stat = execute_sql('''
-  SELECT PCT_DAY_GAS_SPEND AS PCT_GAS_SPEND FROM 
+  SELECT PCT_{time}_GAS_SPEND AS PCT_GAS_SPEND FROM 
   ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-  ''')
+  ''',time=timeframe)
 
   gas_spend_chart = execute_sql('''
   SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_GAS_SPEND
