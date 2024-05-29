@@ -50,41 +50,41 @@ def execute_sql(sql_string, **kwargs):
 
 LLAMA_API = "https://api.llama.fi"
 
-# async def get_llama_data(endpoint):
-#   timeout = Timeout(40.0)
-#   async with httpx.AsyncClient(timeout=timeout) as client:
-#     try:
-#       response = await client.get(f'{LLAMA_API}/{endpoint}')
-#       if response.status_code != 200:
-#         app.logger.error(f"Failed to get data from llama API: {response.text}")
-#         return None, response.status_code
-#       return response.json(), response.status_code
-#     except httpx.HTTPError as ex:
-#       app.logger.error(
-#         f"Exception occurred while calling llama API: {type(ex).__name__}, {ex.args}"
-#       )
-#       return None, 500
+async def get_llama_data(endpoint):
+  timeout = Timeout(40.0)
+  async with httpx.AsyncClient(timeout=timeout) as client:
+    try:
+      response = await client.get(f'{LLAMA_API}/{endpoint}')
+      if response.status_code != 200:
+        app.logger.error(f"Failed to get data from llama API: {response.text}")
+        return None, response.status_code
+      return response.json(), response.status_code
+    except httpx.HTTPError as ex:
+      app.logger.error(
+        f"Exception occurred while calling llama API: {type(ex).__name__}, {ex.args}"
+      )
+      return None, 500
 
-# async def get_tvls(slugs, slugs_dict):
-#   # Create a map from slug to dictionary for easy update
-#   slug_map = {d['SLUG']: d for d in slugs_dict}
+async def get_tvls(slugs, slugs_dict):
+  # Create a map from slug to dictionary for easy update
+  slug_map = {d['LLAMA_SLUG']: d for d in slugs_dict}
 
-#   async def fetch_tvl(slug):
-#     response_data, status_code = await get_llama_data(f'protocol/{slug}')
-#     if response_data is None:
-#       return slug, None
-#     return slug, response_data.get('currentChainTvls', {}).get('ARBITRUM', None)
+  async def fetch_tvl(slug):
+    response_data, status_code = await get_llama_data(f'protocol/{slug}')
+    if response_data is None:
+      return slug, None
+    return slug, response_data.get('currentChainTvls', {}).get('Arbitrum', None)
 
-#   # Gather all tasks
-#   tasks = [fetch_tvl(slug) for slug in slugs]
-#   results = await asyncio.gather(*tasks)
+  # Gather all tasks
+  tasks = [fetch_tvl(slug) for slug in slugs]
+  results = await asyncio.gather(*tasks)
 
-#   # Update slugs_dict with the fetched TVL values
-#   for slug, tvl in results:
-#     if slug in slug_map:
-#       slug_map[slug]['TVL'] = tvl
+  # Update slugs_dict with the fetched TVL values
+  for slug, tvl in results:
+    if slug in slug_map:
+      slug_map[slug]['TVL'] = tvl
 
-#   return list(slug_map.values())
+  return list(slug_map.values())
 
 
 @app.route('/overview')
@@ -136,11 +136,28 @@ def overview():
   ''',
                                time=timeframe)
 
+  slugs_dict = execute_sql('''
+  SELECT DISTINCT LLAMA_SLUG
+  FROM SCROLLSTATS.DBT_SCROLLSTATS.SCROLLSTATS_LABELS_APPS
+  WHERE LLAMA_SLUG IS NOT NULL
+  ''')
+  slug_list = [d['LLAMA_SLUG'] for d in slugs_dict]
+  updated_slugs_dict = asyncio.run(get_tvls(slug_list, slugs_dict))
+
   leaderboard = execute_sql('''
   SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
   ORDER BY ETH_FEES DESC 
-  ''',
-                            time=timeframe)
+  ''', time=timeframe)
+
+  tvl_mapping = {
+    entry['LLAMA_SLUG']: entry
+    for entry in updated_slugs_dict if entry['LLAMA_SLUG'] is not None
+  }
+
+  for entry in leaderboard:
+    slug = entry.get('LLAMA_SLUG')
+    if slug and slug in tvl_mapping:
+      entry.update(tvl_mapping[slug])
 
   current_time = datetime.now().strftime('%d/%m/%y %H:%M')
 
