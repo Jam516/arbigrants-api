@@ -157,10 +157,10 @@ def entity():
   AND c.NAME = '{grantee_name}'
   GROUP BY 1
   ''',
-                                      time=timeframe,
-                                   grantee_name=grantee_name)
+                              time=timeframe,
+                              grantee_name=grantee_name)
 
-  response_data = {"info": info}
+  response_data = {"info": info, "wallets_chart": wallets_chart}
 
   return jsonify(response_data)
 
