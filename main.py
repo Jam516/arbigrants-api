@@ -127,5 +127,43 @@ def overview():
   return jsonify(response_data)
 
 
+@app.route('/grantee')
+@cache.memoize(make_name=make_cache_key)
+def entity():
+  timeframe = request.args.get('timeframe', 'week')
+  grantee_name = request.args.get('grantee_name', 'pendle')
+
+  info = execute_sql('''
+  SELECT 
+  LOGO,
+  DESCRIPTION,
+  WEBSITE,
+  TWITTER,
+  DUNE
+  FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA
+  WHERE NAME = '{grantee_name}'
+  ''',
+                     grantee_name=grantee_name)
+
+  wallets_chart = execute_sql('''
+  SELECT 
+  TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
+  COUNT(DISTINCT FROM_ADDRESS) AS active_wallets
+  FROM ARBITRUM.RAW.TRANSACTIONS t
+  INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
+  ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
+  AND t.BLOCK_TIMESTAMP < DATE_TRUNC('{time}',CURRENT_DATE())
+  AND t.BLOCK_TIMESTAMP >= to_timestamp('2023-06-01', 'yyyy-MM-dd')
+  AND c.NAME = '{grantee_name}'
+  GROUP BY 1
+  ''',
+                                      time=timeframe,
+                                   grantee_name=grantee_name)
+
+  response_data = {"info": info}
+
+  return jsonify(response_data)
+
+
 if __name__ == '__main__':
   app.run(host='0.0.0.0', port=81)
