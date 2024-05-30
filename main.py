@@ -132,7 +132,6 @@ def overview():
 def entity():
   timeframe = request.args.get('timeframe', 'week')
   grantee_name = request.args.get('grantee_name', 'pendle')
-  # grantee_name = grantee_name.replace('%20', ' ')
 
   info = execute_sql('''
   SELECT 
@@ -158,6 +157,7 @@ def entity():
   AND t.BLOCK_TIMESTAMP >= to_timestamp('2023-06-01', 'yyyy-MM-dd')
   AND c.NAME = '{grantee_name}'
   GROUP BY 1
+  ORDER BY 1
   ''',
                               time=timeframe,
                               grantee_name=grantee_name)
