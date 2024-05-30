@@ -132,6 +132,7 @@ def overview():
 def entity():
   timeframe = request.args.get('timeframe', 'week')
   grantee_name = request.args.get('grantee_name', 'pendle')
+  grantee_name = grantee_name.replace('%20', ' ')
 
   info = execute_sql('''
   SELECT 
