@@ -162,7 +162,44 @@ def entity():
                               time=timeframe,
                               grantee_name=grantee_name)
 
-  response_data = {"info": info, "wallets_chart": wallets_chart}
+  gas_chart = execute_sql('''
+  SELECT 
+  TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
+  SUM(RECEIPT_EFFECTIVE_GAS_PRICE * RECEIPT_GAS_USED) AS gas_spend
+  FROM ARBITRUM.RAW.TRANSACTIONS t
+  INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
+  ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
+  AND t.BLOCK_TIMESTAMP < DATE_TRUNC('{time}',CURRENT_DATE())
+  AND t.BLOCK_TIMESTAMP >= to_timestamp('2023-06-01', 'yyyy-MM-dd')
+  AND c.NAME = '{grantee_name}'
+  GROUP BY 1
+  ORDER BY 1
+  ''',
+                          time=timeframe,
+                          grantee_name=grantee_name)
+
+  txns_chart = execute_sql('''
+  SELECT 
+  TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
+  COUNT(*) AS transactions
+  FROM ARBITRUM.RAW.TRANSACTIONS t
+  INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
+  ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
+  AND t.BLOCK_TIMESTAMP < DATE_TRUNC('{time}',CURRENT_DATE())
+  AND t.BLOCK_TIMESTAMP >= to_timestamp('2023-06-01', 'yyyy-MM-dd')
+  AND c.NAME = '{grantee_name}'
+  GROUP BY 1
+  ORDER BY 1
+  ''',
+                           time=timeframe,
+                           grantee_name=grantee_name)
+
+  response_data = {
+    "info": info,
+    "wallets_chart": wallets_chart,
+    "gas_chart": gas_chart,
+    "txns_chart": txns_chart
+  }
 
   return jsonify(response_data)
 
