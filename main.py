@@ -194,11 +194,28 @@ def entity():
                            time=timeframe,
                            grantee_name=grantee_name)
 
+  tvl_chart = execute_sql('''
+  SELECT 
+  TO_VARCHAR(DATE_TRUNC('{time}',DATE), 'YYYY-MM-DD') AS date,
+  SUM(TOTAL_LIQUIDITY_USD) AS TVL
+  FROM DEFILLAMA.TVL.HISTORICAL_TVL_PER_CHAIN tv
+  INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA m
+  WHERE DATE >= to_timestamp('2023-06-01', 'yyyy-MM-dd')
+  AND tv.CHAIN = 'Arbitrum'
+  AND PROTOCOL_NAME = m.LLAMA_NAME
+  AND m.NAME = '{grantee_name}'
+  GROUP BY 1
+  ORDER BY 1
+  ''',
+                          time=timeframe,
+                          grantee_name=grantee_name)
+
   response_data = {
     "info": info,
     "wallets_chart": wallets_chart,
     "gas_chart": gas_chart,
-    "txns_chart": txns_chart
+    "txns_chart": txns_chart,
+    "tvl_chart": tvl_chart,
   }
 
   return jsonify(response_data)
