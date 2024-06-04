@@ -202,21 +202,24 @@ def entity():
   ''',
   grantee_name=grantee_name)
 
-  tvl_chart = execute_sql('''
-  SELECT 
-      TO_VARCHAR(DATE_TRUNC('{time}',DATE), 'YYYY-MM-DD') AS date,
-      TOTAL_LIQUIDITY_USD as TVL
-  FROM DEFILLAMA.TVL.HISTORICAL_TVL_PER_CHAIN tv
-  INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA m
-      ON tv.PROTOCOL_NAME = m.LLAMA_NAME
-      AND DATE >= TO_TIMESTAMP('2023-06-01', 'yyyy-MM-dd')
-      AND tv.CHAIN = 'Arbitrum'
-      AND m.NAME = '{grantee_name}'
-  QUALIFY ROW_NUMBER() OVER (PARTITION BY DATE_TRUNC('week', DATE) ORDER BY DATE ASC) = 1
-  ORDER BY 1;
-  ''',
-                          time=timeframe,
-                          grantee_name=grantee_name)
+  if llama_bool[0]["LLAMA_COUNT"] < 1:
+    tvl_chart = 0
+  else:
+    tvl_chart = execute_sql('''
+    SELECT 
+        TO_VARCHAR(DATE_TRUNC('{time}',DATE), 'YYYY-MM-DD') AS date,
+        TOTAL_LIQUIDITY_USD as TVL
+    FROM DEFILLAMA.TVL.HISTORICAL_TVL_PER_CHAIN tv
+    INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA m
+        ON tv.PROTOCOL_NAME = m.LLAMA_NAME
+        AND DATE >= TO_TIMESTAMP('2023-06-01', 'yyyy-MM-dd')
+        AND tv.CHAIN = 'Arbitrum'
+        AND m.NAME = '{grantee_name}'
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY DATE_TRUNC('week', DATE) ORDER BY DATE ASC) = 1
+    ORDER BY 1;
+    ''',
+                            time=timeframe,
+                            grantee_name=grantee_name)
 
   response_data = {
     "info": info,
