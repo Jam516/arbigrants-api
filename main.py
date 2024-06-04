@@ -196,13 +196,15 @@ def entity():
 
   llama_bool = execute_sql('''
   SELECT 
-  COUNT(*) AS llama_count
+  CASE WHEN LLAMA_NAME IS NOT NULL THEN 1
+  ELSE 0
+  END AS LLAMA_COUNT
   FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA
   WHERE NAME = '{grantee_name}'
   ''',
-  grantee_name=grantee_name)
+                           grantee_name=grantee_name)
 
-  if llama_bool[0]["LLAMA_COUNT"] < 1:
+  if llama_bool[0]["LLAMA_COUNT"] == 0:
     tvl_chart = 0
   else:
     tvl_chart = execute_sql('''
