@@ -224,6 +224,7 @@ def entity():
     "gas_chart": gas_chart,
     "txns_chart": txns_chart,
     "tvl_chart": tvl_chart,
+    "llama_bool": llama_bool
   }
 
   return jsonify(response_data)
