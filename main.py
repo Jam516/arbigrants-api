@@ -194,6 +194,14 @@ def entity():
                            time=timeframe,
                            grantee_name=grantee_name)
 
+  llama_bool = execute_sql('''
+  SELECT 
+  COUNT(*) AS llama_count
+  FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA
+  WHERE NAME = '{grantee_name}'
+  ''',
+  grantee_name=grantee_name)
+
   tvl_chart = execute_sql('''
   SELECT 
       TO_VARCHAR(DATE_TRUNC('{time}',DATE), 'YYYY-MM-DD') AS date,
