@@ -66,12 +66,12 @@ def overview():
                                  time=timeframe)
 
   tvl_stat = execute_sql('''
-  SELECT TVL_GRANTEES AS TRANSACTIONS FROM 
+  SELECT TVL_GRANTEES FROM 
   ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
   ''')
 
   tvl_pct_stat = execute_sql('''
-  SELECT PCT_TVL AS PCT_TRANSACTIONS FROM 
+  SELECT PCT_TVL FROM 
   ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
   ''')
 
