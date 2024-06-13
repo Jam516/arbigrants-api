@@ -65,17 +65,15 @@ def overview():
   ''',
                                  time=timeframe)
 
-  txns_stat = execute_sql('''
-  SELECT {time}_TRANSACTIONS AS TRANSACTIONS FROM 
+  tvl_stat = execute_sql('''
+  SELECT TVL_GRANTEES AS TRANSACTIONS FROM 
   ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-  ''',
-                          time=timeframe)
+  ''')
 
-  txns_pct_stat = execute_sql('''
-  SELECT PCT_{time}_TRANSACTIONS AS PCT_TRANSACTIONS FROM 
+  tvl_pct_stat = execute_sql('''
+  SELECT PCT_TVL AS PCT_TRANSACTIONS FROM 
   ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-  ''',
-                              time=timeframe)
+  ''')
 
   gas_stat = execute_sql('''
   SELECT {time}_GAS_SPEND AS GAS_SPEND FROM     
@@ -115,8 +113,8 @@ def overview():
     "time": current_time,
     "wallets_stat": wallets_stat,
     "wallets_pct_stat": wallets_pct_stat,
-    "txns_stat": txns_stat,
-    "txns_pct_stat": txns_pct_stat,
+    "tvl_stat": tvl_stat,
+    "tvl_pct_stat": tvl_pct_stat,
     "gas_stat": gas_stat,
     "gas_pct_stat": gas_pct_stat,
     "gas_spend_chart": gas_spend_chart,
