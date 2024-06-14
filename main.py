@@ -99,7 +99,7 @@ def overview():
   WHERE DATE >= '2024-01-01'
   ORDER BY DATE
   ''',
-                                time=timeframe)
+                          time=timeframe)
 
   accounts_chart = execute_sql('''
   SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
@@ -107,6 +107,15 @@ def overview():
   ORDER BY DATE 
   ''',
                                time=timeframe)
+
+  tvl_pie = execute_sql('''
+  SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_TVL_PIE
+  ''')
+
+  accounts_pie = execute_sql('''
+  SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
+  ''',
+                             time=timeframe)
 
   leaderboard = execute_sql('''
   SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
@@ -127,6 +136,8 @@ def overview():
     # "gas_spend_chart": gas_spend_chart,
     "tvl_chart": tvl_chart,
     "accounts_chart": accounts_chart,
+    "tvl_pie": tvl_pie,
+    "accounts_pie": accounts_pie,
     "leaderboard": leaderboard
   }
 
