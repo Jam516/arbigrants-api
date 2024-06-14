@@ -125,6 +125,7 @@ def overview():
     "gas_stat": gas_stat,
     "gas_pct_stat": gas_pct_stat,
     # "gas_spend_chart": gas_spend_chart,
+    "tvl_chart": tvl_chart,
     "accounts_chart": accounts_chart,
     "leaderboard": leaderboard
   }
