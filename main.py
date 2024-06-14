@@ -113,7 +113,7 @@ def overview():
   ''')
 
   accounts_pie = execute_sql('''
-  SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
+  SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_WALLETS_PIE
   ''',
                              time=timeframe)
 
