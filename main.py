@@ -87,8 +87,15 @@ def overview():
   ''',
                              time=timeframe)
 
-  gas_spend_chart = execute_sql('''
-  SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_GAS_SPEND
+  # gas_spend_chart = execute_sql('''
+  # SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_GAS_SPEND
+  # WHERE DATE >= '2024-01-01'
+  # ORDER BY DATE
+  # ''',
+  #                               time=timeframe)
+
+  tvl_chart = execute_sql('''
+  SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL
   WHERE DATE >= '2024-01-01'
   ORDER BY DATE
   ''',
@@ -117,7 +124,7 @@ def overview():
     "tvl_pct_stat": tvl_pct_stat,
     "gas_stat": gas_stat,
     "gas_pct_stat": gas_pct_stat,
-    "gas_spend_chart": gas_spend_chart,
+    # "gas_spend_chart": gas_spend_chart,
     "accounts_chart": accounts_chart,
     "leaderboard": leaderboard
   }
