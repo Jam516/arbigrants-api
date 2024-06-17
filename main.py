@@ -5,6 +5,7 @@ from httpx import Timeout
 import snowflake.connector
 from snowflake.connector import DictCursor
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import os
 import httpx
 import asyncio
@@ -52,6 +53,11 @@ def execute_sql(sql_string, **kwargs):
 @cache.memoize(make_name=make_cache_key)
 def overview():
   timeframe = request.args.get('timeframe', 'month')
+  timescale = request.args.get('timescale', 6)
+
+  current_date = datetime.now()
+  previous_month = current_date.replace(day=1) - relativedelta(months=timescale)
+  start_month = previous_month.strftime('%Y-%m-%d')
 
   wallets_stat = execute_sql('''
   SELECT {time}_ACTIVE_WALLETS AS ACTIVE_WALLETS FROM 
@@ -96,17 +102,17 @@ def overview():
 
   tvl_chart = execute_sql('''
   SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL
-  WHERE DATE >= '2024-01-01'
+  WHERE DATE >= '{start_month}'
   ORDER BY DATE
   ''',
-                          time=timeframe)
+                          time=timeframe, start_month=start_month)
 
   accounts_chart = execute_sql('''
   SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
-  WHERE DATE >= '2024-01-01'
+  WHERE DATE >= '{start_month}'
   ORDER BY DATE 
   ''',
-                               time=timeframe)
+                               time=timeframe, start_month=start_month)
 
   tvl_pie = execute_sql('''
   SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_TVL_PIE
