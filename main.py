@@ -133,6 +133,10 @@ def overview():
   ''',
                             time=timeframe)
 
+  name_list = execute_sql('''
+  SELECT NAME FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA
+  ''')
+
   current_time = datetime.now().strftime('%d/%m/%y %H:%M')
 
   response_data = {
@@ -148,7 +152,8 @@ def overview():
     "accounts_chart": accounts_chart,
     "tvl_pie": tvl_pie,
     "accounts_pie": accounts_pie,
-    "leaderboard": leaderboard
+    "leaderboard": leaderboard,
+    "name_list": name_list,
   }
 
   return jsonify(response_data)
