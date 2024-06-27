@@ -58,7 +58,7 @@ def overview():
 
   excludes = request.args.getlist('excludes')
   exclude_list = ','.join(excludes) if excludes else ''
-  
+
   current_date = datetime.now()
   previous_month = current_date.replace(day=1) - relativedelta(
     months=timescale)
@@ -70,42 +70,42 @@ def overview():
     ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
     ''',
                                time=timeframe)
-  
+
     wallets_pct_stat = execute_sql('''
     SELECT PCT_{time}_ACTIVE_WALLETS AS PCT_WALLETS FROM     
     ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
     ''',
                                    time=timeframe)
-  
+
     tvl_stat = execute_sql('''
     SELECT TVL_GRANTEES FROM 
     ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
     ''')
-  
+
     tvl_pct_stat = execute_sql('''
     SELECT PCT_TVL FROM 
     ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
     ''')
-  
+
     gas_stat = execute_sql('''
     SELECT {time}_GAS_SPEND AS GAS_SPEND FROM     
     ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
     ''',
                            time=timeframe)
-  
+
     gas_pct_stat = execute_sql('''
     SELECT PCT_{time}_GAS_SPEND AS PCT_GAS_SPEND FROM 
     ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
     ''',
                                time=timeframe)
-  
+
     # gas_spend_chart = execute_sql('''
     # SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_GAS_SPEND
     # WHERE DATE >= '2024-01-01'
     # ORDER BY DATE
     # ''',
     #                               time=timeframe)
-  
+
     tvl_chart = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL
     WHERE DATE >= '{start_month}'
@@ -113,7 +113,7 @@ def overview():
     ''',
                             time=timeframe,
                             start_month=start_month)
-  
+
     accounts_chart = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
     WHERE DATE >= '{start_month}'
@@ -121,28 +121,28 @@ def overview():
     ''',
                                  time=timeframe,
                                  start_month=start_month)
-  
+
     tvl_pie = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_TVL_PIE
     ''')
-  
+
     accounts_pie = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_WALLETS_PIE
     ''',
                                time=timeframe)
-  
+
     leaderboard = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
     ORDER BY ETH_FEES DESC 
     ''',
                               time=timeframe)
-  
+
     name_list = execute_sql('''
     SELECT NAME FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA
     ''')
-  
+
     current_time = datetime.now().strftime('%d/%m/%y %H:%M')
-  
+
     response_data = {
       "time": current_time,
       "wallets_stat": wallets_stat,
@@ -159,7 +159,7 @@ def overview():
       "leaderboard": leaderboard,
       "name_list": name_list,
     }
-  
+
     return jsonify(response_data)
 
   else:
@@ -228,7 +228,9 @@ def overview():
     )
 
     SELECT * FROM stats_gen, stats_tvl
-    ''',                               time_param=time_param, exclude_list=exclude_list)
+    ''',
+                              time_param=time_param,
+                              exclude_list=exclude_list)
 
     wallets_stat = [{"ACTIVE_WALLETS": cards_query[0]["ACTIVE_WALLETS"]}]
 
@@ -283,7 +285,8 @@ def overview():
   
     ''',
                             time=timeframe,
-                            start_month=start_month)
+                            start_month=start_month,
+                            exclude_list=exclude_list)
 
     accounts_chart = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
