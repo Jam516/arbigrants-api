@@ -57,7 +57,7 @@ def overview():
   timescale = int(timescale)
 
   excludes = request.args.getlist('excludes')
-  exclude_list = ','.join(excludes) if excludes else ''
+  exclude_list = ",".join(f"'{item}'" for item in excludes) if excludes else "''"
 
   current_date = datetime.now()
   previous_month = current_date.replace(day=1) - relativedelta(
@@ -191,7 +191,7 @@ def overview():
     ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
     AND BLOCK_TIMESTAMP < CURRENT_DATE
     AND BLOCK_TIMESTAMP >= CURRENT_DATE - interval '{time_param}'
-    AND c.NAME NOT IN ('{exclude_list}')
+    AND c.NAME NOT IN ({exclude_list})
     )
     
     SELECT 
@@ -218,7 +218,7 @@ def overview():
     ON h.CHAIN = 'Arbitrum'
     AND h.DATE = current_date
     AND h.PROTOCOL_NAME = LLAMA_NAME
-    AND m.NAME NOT IN ('{exclude_list}')
+    AND m.NAME NOT IN ({exclude_list})
     )
     
     SELECT 
@@ -272,7 +272,7 @@ def overview():
     AND h.PROTOCOL_NAME = LLAMA_NAME
     AND DATE < DATE_TRUNC('day',CURRENT_DATE())
     AND DATE >= to_timestamp('{start_month}', 'yyyy-MM-dd')
-    AND m.NAME NOT IN ('{exclude_list}')
+    AND m.NAME NOT IN ({exclude_list})
     GROUP BY 1,2)
     QUALIFY ROW_NUMBER() OVER (PARTITION BY DATE_TRUNC('{time}', DATE) ORDER BY DATE DESC) = 1
     )
@@ -281,7 +281,6 @@ def overview():
     UNION ALL 
     SELECT * FROM grantees
     ORDER BY DATE
-  
     ''',
                             time=timeframe,
                             start_month=start_month,
@@ -309,7 +308,7 @@ def overview():
     ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
     AND BLOCK_TIMESTAMP < DATE_TRUNC('{time}',CURRENT_DATE())
     AND BLOCK_TIMESTAMP >= to_timestamp('{start_month}', 'yyyy-MM-dd')
-    AND c.NAME NOT IN ('{exclude_list}')
+    AND c.NAME NOT IN ({exclude_list})
     GROUP BY 1,2
     )
 
