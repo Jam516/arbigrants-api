@@ -191,7 +191,7 @@ def overview():
     ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
     AND BLOCK_TIMESTAMP < CURRENT_DATE
     AND BLOCK_TIMESTAMP >= CURRENT_DATE - interval '{time_param}'
-    AND c.NAME NOT IN ('{exclude_list}')')
+    AND c.NAME NOT IN ('{exclude_list}')
     
     SELECT 
     grantee_active_wallets AS active_wallets,
