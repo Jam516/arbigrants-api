@@ -230,7 +230,7 @@ def overview():
     SELECT * FROM stats_gen, stats_tvl
     ''',                               time_param=time_param)
 
-    wallets_stat = cards_query['ACTIVE_WALLETS']
+    wallets_stat = cards_query
 
     wallets_pct_stat = execute_sql('''
     SELECT PCT_{time}_ACTIVE_WALLETS AS PCT_WALLETS FROM     
