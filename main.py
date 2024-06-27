@@ -322,13 +322,70 @@ def overview():
                                 exclude_list=exclude_list)
 
     tvl_pie = execute_sql('''
-    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_TVL_PIE
-    ''')
+    WITH cte AS (
+      SELECT 
+        m.NAME,
+        h.TOTAL_LIQUIDITY_USD AS TVL,
+        SUM(h.TOTAL_LIQUIDITY_USD) OVER () AS TOTAL_TVL
+      FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA m
+      INNER JOIN DEFILLAMA.TVL.HISTORICAL_TVL_PER_CHAIN h
+      ON h.CHAIN = 'Arbitrum'
+        AND h.PROTOCOL_NAME = LLAMA_NAME
+        AND DATE = CURRENT_DATE
+        AND m.NAME NOT IN ({exclude_list})
+    ),
+    ranked_cte AS (
+      SELECT 
+        NAME,
+        TVL,
+        TOTAL_TVL,
+        ROUND(TVL / TOTAL_TVL * 100, 2) AS PCT_TVL,
+        RANK() OVER (ORDER BY TVL DESC) AS rnk
+      FROM cte
+    )
+    SELECT 
+      CASE WHEN rnk <= 5 THEN NAME ELSE 'Other' END AS NAME,
+      SUM(TVL) AS TVL,
+      ROUND(SUM(TVL) / MAX(TOTAL_TVL) * 100, 2) AS PCT_TVL
+    FROM ranked_cte
+    GROUP BY CASE WHEN rnk <= 5 THEN NAME ELSE 'Other' END
+    ORDER BY TVL DESC
+    ''',       
+                         exclude_list=exclude_list)
 
     accounts_pie = execute_sql('''
-    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_WALLETS_PIE
-    ''',
-                               time=timeframe)
+    WITH cte AS (
+    SELECT 
+    c.NAME,
+    COUNT(DISTINCT FROM_ADDRESS) AS active_wallets,
+    SUM(COUNT(DISTINCT FROM_ADDRESS)) OVER () AS total_wallets
+    FROM ARBITRUM.RAW.TRANSACTIONS t
+    INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
+    ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
+    AND BLOCK_TIMESTAMP < CURRENT_DATE
+    AND BLOCK_TIMESTAMP >= CURRENT_DATE - interval '{time_param}'
+    AND C.NAME NOT IN ({exclude_list})
+    GROUP BY 1
+    ),
+    ranked_cte AS (
+      SELECT 
+        NAME,
+        active_wallets,
+        total_wallets,
+        ROUND(active_wallets / total_wallets * 100, 2) AS PCT_TVL,
+        RANK() OVER (ORDER BY active_wallets DESC) AS rnk
+      FROM cte
+    )
+    SELECT 
+      CASE WHEN rnk <= 5 THEN NAME ELSE 'Other' END AS NAME,
+      SUM(active_wallets) AS active_wallets,
+      ROUND(SUM(active_wallets) / MAX(total_wallets) * 100, 2) AS PCT_WALLETS
+    FROM ranked_cte
+    GROUP BY CASE WHEN rnk <= 5 THEN NAME ELSE 'Other' END
+    ORDER BY active_wallets DESC
+    ''',time_param=time_param,
+                               time=timeframe,
+                              exclude_list=exclude_list)
 
     leaderboard = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
