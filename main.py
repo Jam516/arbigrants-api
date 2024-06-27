@@ -57,14 +57,14 @@ def overview():
   timescale = int(timescale)
 
   excludes = request.args.getlist('excludes')
-  exclude_list = ",".join(f"'{item}'" for item in excludes) if excludes else "''"
+  exclude_list = ",".join(f"'{item}'" for item in excludes) if excludes else ""
 
   current_date = datetime.now()
   previous_month = current_date.replace(day=1) - relativedelta(
     months=timescale)
   start_month = previous_month.strftime('%Y-%m-%d')
 
-  if exclude_list == '':
+  if exclude_list == "":
     wallets_stat = execute_sql('''
     SELECT {time}_ACTIVE_WALLETS AS ACTIVE_WALLETS FROM 
     ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
