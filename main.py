@@ -192,6 +192,7 @@ def overview():
     AND BLOCK_TIMESTAMP < CURRENT_DATE
     AND BLOCK_TIMESTAMP >= CURRENT_DATE - interval '{time_param}'
     AND c.NAME NOT IN ('{exclude_list}')
+    )
     
     SELECT 
     grantee_active_wallets AS active_wallets,
