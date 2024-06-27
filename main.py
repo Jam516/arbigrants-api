@@ -243,9 +243,44 @@ def overview():
     gas_pct_stat = [{"PCT_GAS_SPEND": cards_query[0]["PCT_GAS_SPEND"]}]
 
     tvl_chart = execute_sql('''
-    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL
-    WHERE DATE >= '{start_month}'
+    with total AS (
+    SELECT 
+    TO_VARCHAR(DATE_TRUNC('{time}',DATE), 'YYYY-MM-DD') AS date,
+    'total' as category,
+    LAST_VALUE(TVL) OVER (PARTITION BY DATE_TRUNC('{time}', DATE) ORDER BY DATE) AS TVL
+    FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_TOTAL_TVL
+    WHERE DATE < DATE_TRUNC('day',CURRENT_DATE())
+    AND DATE >= to_timestamp('{start_month}', 'yyyy-MM-dd')
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY DATE_TRUNC('{time}', DATE) ORDER BY DATE DESC) = 1
+    )
+
+    , grantees AS (
+    SELECT 
+    TO_VARCHAR(DATE_TRUNC('{time}',DATE), 'YYYY-MM-DD') AS date,
+    category,
+    LAST_VALUE(TVL) OVER (PARTITION BY DATE_TRUNC('{time}', DATE) ORDER BY DATE) AS TVL
+    FROM (
+    SELECT 
+    DATE,
+    'grantees' as category,
+    SUM(h.TOTAL_LIQUIDITY_USD) AS TVL
+    FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA m
+    INNER JOIN DEFILLAMA.TVL.HISTORICAL_TVL_PER_CHAIN h
+    ON h.CHAIN = 'Arbitrum'
+    AND h.PROTOCOL_NAME = LLAMA_NAME
+    AND DATE < DATE_TRUNC('day',CURRENT_DATE())
+    AND DATE >= to_timestamp('{start_month}', 'yyyy-MM-dd')
+    AND m.NAME NOT IN ('{exclude_list}')
+    GROUP BY 1,2)
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY DATE_TRUNC('{time}', DATE) ORDER BY DATE DESC) = 1
+    )
+
+    SELECT * FROM total
     ORDER BY DATE
+    UNION ALL 
+    SELECT * FROM grantees
+    ORDER BY DATE
+  
     ''',
                             time=timeframe,
                             start_month=start_month)
