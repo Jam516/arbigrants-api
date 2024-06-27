@@ -191,9 +191,7 @@ def overview():
     ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
     AND BLOCK_TIMESTAMP < CURRENT_DATE
     AND BLOCK_TIMESTAMP >= CURRENT_DATE - interval '{time_param}'
-    INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA m
-    ON m.NAME = c.NAME 
-    AND m.chain = 'Arbitrum One')
+    AND c.NAME NOT IN ('{exclude_list}')')
     
     SELECT 
     grantee_active_wallets AS active_wallets,
@@ -219,6 +217,7 @@ def overview():
     ON h.CHAIN = 'Arbitrum'
     AND h.DATE = current_date
     AND h.PROTOCOL_NAME = LLAMA_NAME
+    AND m.NAME NOT IN ('{exclude_list}')
     )
     
     SELECT 
@@ -287,7 +286,6 @@ def overview():
       "tvl_pct_stat": tvl_pct_stat,
       "gas_stat": gas_stat,
       "gas_pct_stat": gas_pct_stat,
-      # "gas_spend_chart": gas_spend_chart,
       "tvl_chart": tvl_chart,
       "accounts_chart": accounts_chart,
       "tvl_pie": tvl_pie,
