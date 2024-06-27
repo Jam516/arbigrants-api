@@ -227,7 +227,7 @@ def overview():
     )
 
     SELECT * FROM stats_gen, stats_tvl
-    ''',                               time_param=time_param)
+    ''',                               time_param=time_param, exclude_list=exclude_list)
 
     wallets_stat = [{"ACTIVE_WALLETS": cards_query[0]["ACTIVE_WALLETS"]}]
 
