@@ -197,7 +197,7 @@ def overview():
     
     SELECT 
     grantee_active_wallets AS active_wallets,
-    grantee_active_wallets/all_active_wallets AS pct_active_wallets,
+    grantee_active_wallets/all_active_wallets AS pct_wallets,
     grantee_gas_spend as gas_spend,
     grantee_gas_spend/all_gas_spend as pct_gas_spend
     FROM all_txns, grantee_txns
@@ -230,35 +230,17 @@ def overview():
     SELECT * FROM stats_gen, stats_tvl
     ''',                               time_param=time_param)
 
-    wallets_stat = cards_query
+    wallets_stat = [{"ACTIVE_WALLETS": cards_query[0]["ACTIVE_WALLETS"]}]
 
-    wallets_pct_stat = execute_sql('''
-    SELECT PCT_{time}_ACTIVE_WALLETS AS PCT_WALLETS FROM     
-    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-    ''',
-                                   time=timeframe)
+    wallets_pct_stat = [{"PCT_WALLETS": cards_query[0]["PCT_WALLETS"]}]
 
-    tvl_stat = execute_sql('''
-    SELECT TVL_GRANTEES FROM 
-    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-    ''')
+    tvl_stat = [{"TVL_GRANTEES": cards_query[0]["TVL_GRANTEES"]}]
 
-    tvl_pct_stat = execute_sql('''
-    SELECT PCT_TVL FROM 
-    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-    ''')
+    tvl_pct_stat = [{"PCT_TVL": cards_query[0]["PCT_TVL"]}]
 
-    gas_stat = execute_sql('''
-    SELECT {time}_GAS_SPEND AS GAS_SPEND FROM     
-    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-    ''',
-                           time=timeframe)
+    gas_stat = [{"GAS_SPEND": cards_query[0]["GAS_SPEND"]}]
 
-    gas_pct_stat = execute_sql('''
-    SELECT PCT_{time}_GAS_SPEND AS PCT_GAS_SPEND FROM 
-    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-    ''',
-                               time=timeframe)
+    gas_pct_stat = [{"PCT_GAS_SPEND": cards_query[0]["PCT_GAS_SPEND"]}]
 
     tvl_chart = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL
