@@ -56,107 +56,265 @@ def overview():
   timescale = request.args.get('timescale', '6')
   timescale = int(timescale)
 
+  excludes = request.args.getlist('excludes')
+  exclude_list = ','.join(excludes) if excludes else ''
+  
   current_date = datetime.now()
   previous_month = current_date.replace(day=1) - relativedelta(
     months=timescale)
   start_month = previous_month.strftime('%Y-%m-%d')
 
-  wallets_stat = execute_sql('''
-  SELECT {time}_ACTIVE_WALLETS AS ACTIVE_WALLETS FROM 
-  ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-  ''',
-                             time=timeframe)
+  if exclude_list == '':
+    wallets_stat = execute_sql('''
+    SELECT {time}_ACTIVE_WALLETS AS ACTIVE_WALLETS FROM 
+    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
+    ''',
+                               time=timeframe)
+  
+    wallets_pct_stat = execute_sql('''
+    SELECT PCT_{time}_ACTIVE_WALLETS AS PCT_WALLETS FROM     
+    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
+    ''',
+                                   time=timeframe)
+  
+    tvl_stat = execute_sql('''
+    SELECT TVL_GRANTEES FROM 
+    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
+    ''')
+  
+    tvl_pct_stat = execute_sql('''
+    SELECT PCT_TVL FROM 
+    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
+    ''')
+  
+    gas_stat = execute_sql('''
+    SELECT {time}_GAS_SPEND AS GAS_SPEND FROM     
+    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
+    ''',
+                           time=timeframe)
+  
+    gas_pct_stat = execute_sql('''
+    SELECT PCT_{time}_GAS_SPEND AS PCT_GAS_SPEND FROM 
+    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
+    ''',
+                               time=timeframe)
+  
+    # gas_spend_chart = execute_sql('''
+    # SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_GAS_SPEND
+    # WHERE DATE >= '2024-01-01'
+    # ORDER BY DATE
+    # ''',
+    #                               time=timeframe)
+  
+    tvl_chart = execute_sql('''
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL
+    WHERE DATE >= '{start_month}'
+    ORDER BY DATE
+    ''',
+                            time=timeframe,
+                            start_month=start_month)
+  
+    accounts_chart = execute_sql('''
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
+    WHERE DATE >= '{start_month}'
+    ORDER BY DATE 
+    ''',
+                                 time=timeframe,
+                                 start_month=start_month)
+  
+    tvl_pie = execute_sql('''
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_TVL_PIE
+    ''')
+  
+    accounts_pie = execute_sql('''
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_WALLETS_PIE
+    ''',
+                               time=timeframe)
+  
+    leaderboard = execute_sql('''
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
+    ORDER BY ETH_FEES DESC 
+    ''',
+                              time=timeframe)
+  
+    name_list = execute_sql('''
+    SELECT NAME FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA
+    ''')
+  
+    current_time = datetime.now().strftime('%d/%m/%y %H:%M')
+  
+    response_data = {
+      "time": current_time,
+      "wallets_stat": wallets_stat,
+      "wallets_pct_stat": wallets_pct_stat,
+      "tvl_stat": tvl_stat,
+      "tvl_pct_stat": tvl_pct_stat,
+      "gas_stat": gas_stat,
+      "gas_pct_stat": gas_pct_stat,
+      # "gas_spend_chart": gas_spend_chart,
+      "tvl_chart": tvl_chart,
+      "accounts_chart": accounts_chart,
+      "tvl_pie": tvl_pie,
+      "accounts_pie": accounts_pie,
+      "leaderboard": leaderboard,
+      "name_list": name_list,
+    }
+  
+    return jsonify(response_data)
 
-  wallets_pct_stat = execute_sql('''
-  SELECT PCT_{time}_ACTIVE_WALLETS AS PCT_WALLETS FROM     
-  ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-  ''',
-                                 time=timeframe)
+  else:
 
-  tvl_stat = execute_sql('''
-  SELECT TVL_GRANTEES FROM 
-  ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-  ''')
+    if timeframe == 'week':
+      time_param = '7 day'
+    elif timeframe == 'month':
+      time_param = '1 month'
+    else:
+      time_param = '1 day'
 
-  tvl_pct_stat = execute_sql('''
-  SELECT PCT_TVL FROM 
-  ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-  ''')
+    cards_query = execute_sql('''
+    WITH stats_gen AS (
+    WITH all_txns AS (
+    SELECT 
+    COUNT(DISTINCT FROM_ADDRESS) as all_active_wallets,
+    SUM((RECEIPT_EFFECTIVE_GAS_PRICE * RECEIPT_GAS_USED)/1e18) AS all_gas_spend
+    FROM ARBITRUM.RAW.TRANSACTIONS t   
+    WHERE BLOCK_TIMESTAMP < CURRENT_DATE
+    AND BLOCK_TIMESTAMP >= CURRENT_DATE - interval '{time_param}'
+    ),
+    
+    grantee_txns AS (
+    SELECT 
+    COUNT(DISTINCT FROM_ADDRESS) as grantee_active_wallets,
+    SUM((RECEIPT_EFFECTIVE_GAS_PRICE * RECEIPT_GAS_USED)/1e18) AS grantee_gas_spend
+    FROM ARBITRUM.RAW.TRANSACTIONS t
+    INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
+    ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
+    AND BLOCK_TIMESTAMP < CURRENT_DATE
+    AND BLOCK_TIMESTAMP >= CURRENT_DATE - interval '{time_param}'
+    INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA m
+    ON m.NAME = c.NAME 
+    AND m.chain = 'Arbitrum One')
+    
+    SELECT 
+    grantee_active_wallets AS active_wallets,
+    grantee_active_wallets/all_active_wallets AS pct_active_wallets,
+    grantee_gas_spend as gas_spend,
+    grantee_gas_spend/all_gas_spend as pct_gas_spend
+    FROM all_txns, grantee_txns
+    ),
 
-  gas_stat = execute_sql('''
-  SELECT {time}_GAS_SPEND AS GAS_SPEND FROM     
-  ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-  ''',
-                         time=timeframe)
+    stats_tvl AS (
+    WITH all_tvl AS (
+    SELECT 
+    TVL AS tvl_all
+    FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_TOTAL_TVL
+    WHERE DATE = current_date
+    ),
+    
+    grantee_tvl AS (
+    SELECT 
+    SUM(h.TOTAL_LIQUIDITY_USD) AS tvl_grantees
+    FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA m
+    INNER JOIN DEFILLAMA.TVL.HISTORICAL_TVL_PER_CHAIN h
+    ON h.CHAIN = 'Arbitrum'
+    AND h.DATE = current_date
+    AND h.PROTOCOL_NAME = LLAMA_NAME
+    )
+    
+    SELECT 
+    tvl_grantees,
+    tvl_grantees/tvl_all as pct_tvl
+    FROM all_tvl, grantee_tvl
+    )
 
-  gas_pct_stat = execute_sql('''
-  SELECT PCT_{time}_GAS_SPEND AS PCT_GAS_SPEND FROM 
-  ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-  ''',
-                             time=timeframe)
+    SELECT * FROM stats_gen, stats_tvl
+    ''',                               time_param=time_param)
 
-  # gas_spend_chart = execute_sql('''
-  # SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_GAS_SPEND
-  # WHERE DATE >= '2024-01-01'
-  # ORDER BY DATE
-  # ''',
-  #                               time=timeframe)
+    wallets_stat = cards_query['ACTIVE_WALLETS']
 
-  tvl_chart = execute_sql('''
-  SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL
-  WHERE DATE >= '{start_month}'
-  ORDER BY DATE
-  ''',
-                          time=timeframe,
-                          start_month=start_month)
+    wallets_pct_stat = execute_sql('''
+    SELECT PCT_{time}_ACTIVE_WALLETS AS PCT_WALLETS FROM     
+    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
+    ''',
+                                   time=timeframe)
 
-  accounts_chart = execute_sql('''
-  SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
-  WHERE DATE >= '{start_month}'
-  ORDER BY DATE 
-  ''',
-                               time=timeframe,
-                               start_month=start_month)
+    tvl_stat = execute_sql('''
+    SELECT TVL_GRANTEES FROM 
+    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
+    ''')
 
-  tvl_pie = execute_sql('''
-  SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_TVL_PIE
-  ''')
+    tvl_pct_stat = execute_sql('''
+    SELECT PCT_TVL FROM 
+    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
+    ''')
 
-  accounts_pie = execute_sql('''
-  SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_WALLETS_PIE
-  ''',
-                             time=timeframe)
+    gas_stat = execute_sql('''
+    SELECT {time}_GAS_SPEND AS GAS_SPEND FROM     
+    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
+    ''',
+                           time=timeframe)
 
-  leaderboard = execute_sql('''
-  SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
-  ORDER BY ETH_FEES DESC 
-  ''',
-                            time=timeframe)
+    gas_pct_stat = execute_sql('''
+    SELECT PCT_{time}_GAS_SPEND AS PCT_GAS_SPEND FROM 
+    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
+    ''',
+                               time=timeframe)
 
-  name_list = execute_sql('''
-  SELECT NAME FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA
-  ''')
+    tvl_chart = execute_sql('''
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL
+    WHERE DATE >= '{start_month}'
+    ORDER BY DATE
+    ''',
+                            time=timeframe,
+                            start_month=start_month)
 
-  current_time = datetime.now().strftime('%d/%m/%y %H:%M')
+    accounts_chart = execute_sql('''
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
+    WHERE DATE >= '{start_month}'
+    ORDER BY DATE 
+    ''',
+                                 time=timeframe,
+                                 start_month=start_month)
 
-  response_data = {
-    "time": current_time,
-    "wallets_stat": wallets_stat,
-    "wallets_pct_stat": wallets_pct_stat,
-    "tvl_stat": tvl_stat,
-    "tvl_pct_stat": tvl_pct_stat,
-    "gas_stat": gas_stat,
-    "gas_pct_stat": gas_pct_stat,
-    # "gas_spend_chart": gas_spend_chart,
-    "tvl_chart": tvl_chart,
-    "accounts_chart": accounts_chart,
-    "tvl_pie": tvl_pie,
-    "accounts_pie": accounts_pie,
-    "leaderboard": leaderboard,
-    "name_list": name_list,
-  }
+    tvl_pie = execute_sql('''
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_TVL_PIE
+    ''')
 
-  return jsonify(response_data)
+    accounts_pie = execute_sql('''
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_WALLETS_PIE
+    ''',
+                               time=timeframe)
+
+    leaderboard = execute_sql('''
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
+    ORDER BY ETH_FEES DESC 
+    ''',
+                              time=timeframe)
+
+    name_list = execute_sql('''
+    SELECT NAME FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA
+    ''')
+
+    current_time = datetime.now().strftime('%d/%m/%y %H:%M')
+
+    response_data = {
+      "time": current_time,
+      "wallets_stat": wallets_stat,
+      "wallets_pct_stat": wallets_pct_stat,
+      "tvl_stat": tvl_stat,
+      "tvl_pct_stat": tvl_pct_stat,
+      "gas_stat": gas_stat,
+      "gas_pct_stat": gas_pct_stat,
+      # "gas_spend_chart": gas_spend_chart,
+      "tvl_chart": tvl_chart,
+      "accounts_chart": accounts_chart,
+      "tvl_pie": tvl_pie,
+      "accounts_pie": accounts_pie,
+      "leaderboard": leaderboard,
+      "name_list": name_list,
+    }
+
+    return jsonify(response_data)
 
 
 @app.route('/grantee')
