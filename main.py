@@ -293,7 +293,7 @@ def overview():
     TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
     'total' as category,
     COUNT(DISTINCT FROM_ADDRESS) AS active_wallets
-    FROM {{ source('arbitrum_raw', 'transactions') }}
+    FROM ARBITRUM.RAW.TRANSACTIONS
     WHERE BLOCK_TIMESTAMP < DATE_TRUNC('{time}',CURRENT_DATE())
     AND BLOCK_TIMESTAMP >= to_timestamp('{start_month}', 'yyyy-MM-dd')
     GROUP BY 1,2
@@ -304,7 +304,7 @@ def overview():
     TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
     'grantees' as category,
     COUNT(DISTINCT FROM_ADDRESS) AS active_wallets
-    FROM {{ source('arbitrum_raw', 'transactions') }} t
+    FROM ARBITRUM.RAW.TRANSACTIONS t
     INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
     ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
     AND BLOCK_TIMESTAMP < DATE_TRUNC('{time}',CURRENT_DATE())
