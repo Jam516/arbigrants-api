@@ -278,7 +278,6 @@ def overview():
     )
 
     SELECT * FROM total
-    ORDER BY DATE
     UNION ALL 
     SELECT * FROM grantees
     ORDER BY DATE
