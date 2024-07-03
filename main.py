@@ -133,7 +133,7 @@ def overview():
 
     leaderboard = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
-    
+    ORDER BY TRANSACTIONS DESC
     ''',
                               time=timeframe)
 
@@ -319,7 +319,7 @@ def overview():
     ''',
                                  time=timeframe,
                                  start_month=start_month,
-                                exclude_list=exclude_list)
+                                 exclude_list=exclude_list)
 
     tvl_pie = execute_sql('''
     WITH cte AS (
@@ -350,8 +350,8 @@ def overview():
     FROM ranked_cte
     GROUP BY CASE WHEN rnk <= 5 THEN NAME ELSE 'Other' END
     ORDER BY TVL DESC
-    ''',       
-                         exclude_list=exclude_list)
+    ''',
+                          exclude_list=exclude_list)
 
     accounts_pie = execute_sql('''
     WITH cte AS (
@@ -383,13 +383,14 @@ def overview():
     FROM ranked_cte
     GROUP BY CASE WHEN rnk <= 5 THEN NAME ELSE 'Other' END
     ORDER BY active_wallets DESC
-    ''',time_param=time_param,
+    ''',
+                               time_param=time_param,
                                time=timeframe,
-                              exclude_list=exclude_list)
+                               exclude_list=exclude_list)
 
     leaderboard = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
-    
+    ORDER BY TRANSACTIONS DESC
     ''',
                               time=timeframe)
 
