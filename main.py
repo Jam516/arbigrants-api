@@ -107,7 +107,7 @@ def overview():
     #                               time=timeframe)
 
     tvl_chart = execute_sql('''
-    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL
+    SELECT DATE, CATEGORY, TVL FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL
     WHERE DATE >= '{start_month}'
     ORDER BY DATE
     ''',
