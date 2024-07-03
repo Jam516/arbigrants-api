@@ -133,7 +133,7 @@ def overview():
 
     leaderboard = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
-    ORDER BY ETH_FEES DESC 
+    
     ''',
                               time=timeframe)
 
@@ -389,7 +389,7 @@ def overview():
 
     leaderboard = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
-    ORDER BY ETH_FEES DESC 
+    
     ''',
                               time=timeframe)
 
