@@ -114,6 +114,14 @@ def overview():
                             time=timeframe,
                             start_month=start_month)
 
+    tvl_chart_eth = execute_sql('''
+    SELECT DATE, CATEGORY, TVL_ETH FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL
+    WHERE DATE >= '{start_month}'
+    ORDER BY DATE
+    ''',
+                            time=timeframe,
+                            start_month=start_month)
+
     accounts_chart = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
     WHERE DATE >= '{start_month}'
@@ -153,6 +161,7 @@ def overview():
       "gas_pct_stat": gas_pct_stat,
       # "gas_spend_chart": gas_spend_chart,
       "tvl_chart": tvl_chart,
+      "tvl_chart_eth": tvl_chart_eth,
       "accounts_chart": accounts_chart,
       "tvl_pie": tvl_pie,
       "accounts_pie": accounts_pie,
