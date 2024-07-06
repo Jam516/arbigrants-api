@@ -39,8 +39,8 @@ def execute_sql(sql_string, **kwargs):
                                      password=SNOWFLAKE_PASS,
                                      account=SNOWFLAKE_ACCOUNT,
                                      warehouse=SNOWFLAKE_WAREHOUSE,
-                                     database="BUNDLEBEAR",
-                                     schema="ERC4337")
+                                     database="ARBIGRANTS",
+                                     schema="DBT")
 
   sql = sql_string.format(**kwargs)
   res = conn.cursor(DictCursor).execute(sql)
@@ -253,7 +253,7 @@ def overview():
 
     gas_pct_stat = [{"PCT_GAS_SPEND": cards_query[0]["PCT_GAS_SPEND"]}]
 
-    tvl_chart = execute_sql('''
+    tvl_query = execute_sql('''
     with total AS (
     SELECT 
     TO_VARCHAR(DATE_TRUNC('{time}',DATE), 'YYYY-MM-DD') AS date,
@@ -315,6 +315,9 @@ def overview():
                             time=timeframe,
                             start_month=start_month,
                             exclude_list=exclude_list)
+
+    tvl_chart = [{k: v for k, v in item.items() if k != 'TVL_ETH'} for item in tvl_query]
+    tvl_chart_eth = [{k: v for k, v in item.items() if k != 'TVL'} for item in tvl_query]
 
     accounts_chart = execute_sql('''
     with total AS (
@@ -439,6 +442,7 @@ def overview():
       "gas_stat": gas_stat,
       "gas_pct_stat": gas_pct_stat,
       "tvl_chart": tvl_chart,
+      "tvl_chart_eth": tvl_chart_eth,
       "accounts_chart": accounts_chart,
       "tvl_pie": tvl_pie,
       "accounts_pie": accounts_pie,
