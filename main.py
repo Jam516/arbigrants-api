@@ -286,10 +286,31 @@ def overview():
     QUALIFY ROW_NUMBER() OVER (PARTITION BY DATE_TRUNC('{time}', DATE) ORDER BY DATE DESC) = 1
     )
 
+    , prices AS (
+    SELECT 
+    DATE_TRUNC('{time}',HOUR) AS date,
+    LAST_VALUE(USD_PRICE) OVER (PARTITION BY DATE_TRUNC('{time}', HOUR) ORDER BY HOUR) AS USD_PRICE
+    FROM COMMON.PRICES.TOKEN_PRICES_HOURLY_EASY
+    WHERE SYMBOL = 'ETH'
+    AND HOUR >= to_timestamp('{start_month}', 'yyyy-MM-dd')
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY DATE_TRUNC('{time}', DATE) ORDER BY HOUR DESC) = 1
+    )
+
+    , merged AS (
     SELECT * FROM total
     UNION ALL 
     SELECT * FROM grantees
     ORDER BY DATE
+    )
+
+    SELECT 
+    m.DATE,
+    m.CATEGORY,
+    m.TVL,
+    m.TVL/p.USD_PRICE AS TVL_ETH
+    FROM merged m
+    LEFT JOIN prices p
+    ON m.DATE = p.DATE
     ''',
                             time=timeframe,
                             start_month=start_month,
