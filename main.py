@@ -549,13 +549,34 @@ def entity():
                             time=timeframe,
                             grantee_name=grantee_name)
 
+  grant_date_bool = execute_sql('''
+  SELECT 
+  CASE WHEN GRANT_DATE <> '' THEN 1
+  ELSE 0
+  END AS GRANT_DATE_COUNT
+  FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA
+  WHERE NAME = '{grantee_name}'
+  ''',
+                           grantee_name=grantee_name)
+
+  if grant_date_bool[0]["GRANT_DATE_COUNT"] == 0:
+    grant_date = 0
+  else:
+    grant_date = execute_sql('''
+    SELECT GRANT_DATE
+    FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA
+    WHERE NAME = '{grantee_name}'
+    ''',
+                            grantee_name=grantee_name)
+
   response_data = {
     "info": info,
     "wallets_chart": wallets_chart,
     "gas_chart": gas_chart,
     "txns_chart": txns_chart,
     "tvl_chart": tvl_chart,
-    "llama_bool": llama_bool
+    "llama_bool": llama_bool,
+    "grant_date": grant_date
   }
 
   return jsonify(response_data)
