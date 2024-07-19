@@ -65,39 +65,28 @@ def overview():
   start_month = previous_month.strftime('%Y-%m-%d')
 
   if exclude_list == "":
-    wallets_stat = execute_sql('''
-    SELECT {time}_ACTIVE_WALLETS AS ACTIVE_WALLETS FROM 
-    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-    ''',
+    cards_query = execute_sql('''
+    SELECT {time}_ACTIVE_WALLETS AS ACTIVE_WALLETS,
+    PCT_{time}_ACTIVE_WALLETS AS PCT_WALLETS,
+    TVL_GRANTEES,
+    PCT_TVL,
+    {time}_GAS_SPEND AS GAS_SPEND
+    PCT_{time}_GAS_SPEND AS PCT_GAS_SPEND
+    FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
+   ''',
                                time=timeframe)
+    
+    wallets_stat = [{"ACTIVE_WALLETS": cards_query[0]["ACTIVE_WALLETS"]}]
 
-    wallets_pct_stat = execute_sql('''
-    SELECT PCT_{time}_ACTIVE_WALLETS AS PCT_WALLETS FROM     
-    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-    ''',
-                                   time=timeframe)
+    wallets_pct_stat = [{"PCT_WALLETS": cards_query[0]["PCT_WALLETS"]}]
 
-    tvl_stat = execute_sql('''
-    SELECT TVL_GRANTEES FROM 
-    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-    ''')
+    tvl_stat = [{"TVL_GRANTEES": cards_query[0]["TVL_GRANTEES"]}]
 
-    tvl_pct_stat = execute_sql('''
-    SELECT PCT_TVL FROM 
-    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-    ''')
+    tvl_pct_stat = [{"PCT_TVL": cards_query[0]["PCT_TVL"]}]
 
-    gas_stat = execute_sql('''
-    SELECT {time}_GAS_SPEND AS GAS_SPEND FROM     
-    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-    ''',
-                           time=timeframe)
+    gas_stat = [{"GAS_SPEND": cards_query[0]["GAS_SPEND"]}]
 
-    gas_pct_stat = execute_sql('''
-    SELECT PCT_{time}_GAS_SPEND AS PCT_GAS_SPEND FROM 
-    ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
-    ''',
-                               time=timeframe)
+    gas_pct_stat = [{"PCT_GAS_SPEND": cards_query[0]["PCT_GAS_SPEND"]}]
 
     # gas_spend_chart = execute_sql('''
     # SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_GAS_SPEND
