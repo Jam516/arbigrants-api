@@ -576,6 +576,7 @@ def entity():
     "txns_chart": txns_chart,
     "tvl_chart": tvl_chart,
     "llama_bool": llama_bool,
+    "grant_date_bool": grant_date_bool,
     "grant_date": grant_date
   }
 
