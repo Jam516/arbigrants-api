@@ -74,8 +74,8 @@ def overview():
     PCT_{time}_GAS_SPEND AS PCT_GAS_SPEND
     FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
    ''',
-                               time=timeframe)
-    
+                              time=timeframe)
+
     wallets_stat = [{"ACTIVE_WALLETS": cards_query[0]["ACTIVE_WALLETS"]}]
 
     wallets_pct_stat = [{"PCT_WALLETS": cards_query[0]["PCT_WALLETS"]}]
@@ -108,8 +108,8 @@ def overview():
     WHERE DATE >= '{start_month}'
     ORDER BY DATE
     ''',
-                            time=timeframe,
-                            start_month=start_month)
+                                time=timeframe,
+                                start_month=start_month)
 
     accounts_chart = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
@@ -305,8 +305,14 @@ def overview():
                             start_month=start_month,
                             exclude_list=exclude_list)
 
-    tvl_chart = [{k: v for k, v in item.items() if k != 'TVL_ETH'} for item in tvl_query]
-    tvl_chart_eth = [{k: v for k, v in item.items() if k != 'TVL'} for item in tvl_query]
+    tvl_chart = [{
+      k: v
+      for k, v in item.items() if k != 'TVL_ETH'
+    } for item in tvl_query]
+    tvl_chart_eth = [{
+      k: v
+      for k, v in item.items() if k != 'TVL'
+    } for item in tvl_query]
 
     accounts_chart = execute_sql('''
     with total AS (
@@ -463,16 +469,10 @@ def entity():
 
   wallets_chart = execute_sql('''
   SELECT 
-  TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
-  COUNT(DISTINCT FROM_ADDRESS) AS active_wallets
-  FROM ARBITRUM.RAW.TRANSACTIONS t
-  INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
-  ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
-  AND t.BLOCK_TIMESTAMP < DATE_TRUNC('{time}',CURRENT_DATE())
-  AND t.BLOCK_TIMESTAMP >= to_timestamp('2023-06-01', 'yyyy-MM-dd')
-  AND c.NAME = '{grantee_name}'
-  GROUP BY 1
-  ORDER BY 1
+  DATE,
+  ACTIVE_WALLETS
+  FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS_BY_PROJECT
+  WHERE NAME = '{grantee_name}'
   ''',
                               time=timeframe,
                               grantee_name=grantee_name)
@@ -546,7 +546,7 @@ def entity():
   FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA
   WHERE NAME = '{grantee_name}'
   ''',
-                           grantee_name=grantee_name)
+                                grantee_name=grantee_name)
 
   if grant_date_bool[0]["GRANT_DATE_COUNT"] == 0:
     grant_date = 0
@@ -556,7 +556,7 @@ def entity():
     FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA
     WHERE NAME = '{grantee_name}'
     ''',
-                            grantee_name=grantee_name)
+                             grantee_name=grantee_name)
 
   response_data = {
     "info": info,
