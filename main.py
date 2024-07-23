@@ -140,7 +140,7 @@ def overview():
                                  start_month=start_month)
 
     accounts_chart_post_grant = execute_sql('''
-    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS_POST_GRANT
     WHERE DATE >= '{start_month}'
     AND CATEGORY = 'grantees'
     ORDER BY DATE 
