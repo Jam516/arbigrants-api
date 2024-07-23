@@ -130,7 +130,7 @@ def overview():
 
     leaderboard = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
-    ORDER BY TRANSACTIONS DESC
+    ORDER BY WALLETS DESC
     ''',
                               time=timeframe)
 
@@ -412,7 +412,7 @@ def overview():
 
     leaderboard = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
-    ORDER BY TRANSACTIONS DESC
+    ORDER BY WALLETS DESC
     ''',
                               time=timeframe)
 
