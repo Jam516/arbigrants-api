@@ -480,15 +480,10 @@ def entity():
 
   gas_chart = execute_sql('''
   SELECT 
-  TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
-  SUM((RECEIPT_EFFECTIVE_GAS_PRICE * RECEIPT_GAS_USED)/1e18) AS gas_spend
-  FROM ARBITRUM.RAW.TRANSACTIONS t
-  INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
-  ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
-  AND t.BLOCK_TIMESTAMP < DATE_TRUNC('{time}',CURRENT_DATE())
-  AND t.BLOCK_TIMESTAMP >= to_timestamp('2023-06-01', 'yyyy-MM-dd')
-  AND c.NAME = '{grantee_name}'
-  GROUP BY 1
+  DATE,
+  GAS_SPEND
+  FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_GAS_SPEND_BY_PROJECT
+  WHERE NAME = '{grantee_name}'
   ORDER BY 1
   ''',
                           time=timeframe,
