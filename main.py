@@ -111,9 +111,38 @@ def overview():
                                 time=timeframe,
                                 start_month=start_month)
 
+    tvl_chart_post_grant = execute_sql('''
+    SELECT DATE, TVL 
+    FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL_POST_GRANT
+    WHERE DATE >= '{start_month}'
+    AND CATEGORY = 'grantees'
+    ORDER BY DATE
+    ''',
+                                       time=timeframe,
+                                       start_month=start_month)
+
+    tvl_chart_eth_post_grant = execute_sql('''
+    SELECT DATE, TVL_ETH
+    FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL_POST_GRANT
+    WHERE DATE >= '{start_month}'
+    AND CATEGORY = 'grantees'
+    ORDER BY DATE
+    ''',
+                                       time=timeframe,
+                                       start_month=start_month)
+
     accounts_chart = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
     WHERE DATE >= '{start_month}'
+    ORDER BY DATE 
+    ''',
+                                 time=timeframe,
+                                 start_month=start_month)
+
+    accounts_chart_post_grant = execute_sql('''
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
+    WHERE DATE >= '{start_month}'
+    AND CATEGORY = 'grantees'
     ORDER BY DATE 
     ''',
                                  time=timeframe,
@@ -152,6 +181,9 @@ def overview():
       "tvl_chart": tvl_chart,
       "tvl_chart_eth": tvl_chart_eth,
       "accounts_chart": accounts_chart,
+      "tvl_chart_post_grant": tvl_chart_post_grant,
+      "tvl_chart_eth_post_grant": tvl_chart_eth_post_grant,
+      "accounts_chart_post_grant": accounts_chart_post_grant,
       "tvl_pie": tvl_pie,
       "accounts_pie": accounts_pie,
       "leaderboard": leaderboard,
