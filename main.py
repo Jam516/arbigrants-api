@@ -112,7 +112,7 @@ def overview():
                                 start_month=start_month)
 
     tvl_chart_post_grant = execute_sql('''
-    SELECT DATE, TVL 
+    SELECT DATE, CATEGORY, TVL 
     FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL_POST_GRANT
     WHERE DATE >= '{start_month}'
     AND CATEGORY = 'grantees'
@@ -122,14 +122,14 @@ def overview():
                                        start_month=start_month)
 
     tvl_chart_eth_post_grant = execute_sql('''
-    SELECT DATE, TVL_ETH
+    SELECT DATE, CATEGORY, TVL_ETH
     FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL_POST_GRANT
     WHERE DATE >= '{start_month}'
     AND CATEGORY = 'grantees'
     ORDER BY DATE
     ''',
-                                       time=timeframe,
-                                       start_month=start_month)
+                                           time=timeframe,
+                                           start_month=start_month)
 
     accounts_chart = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
@@ -145,8 +145,8 @@ def overview():
     AND CATEGORY = 'grantees'
     ORDER BY DATE 
     ''',
-                                 time=timeframe,
-                                 start_month=start_month)
+                                            time=timeframe,
+                                            start_month=start_month)
 
     tvl_pie = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_TVL_PIE
