@@ -129,10 +129,10 @@ def overview():
                                            start_month=start_month)
 
     accounts_chart = execute_sql('''
-    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_{time}_ACTIVE_WALLETS_ARBITRUM_ONE
+    SELECT DATE, 'total' AS CATEGORY, ACTIVE_WALLETS FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_{time}_ACTIVE_WALLETS_ARBITRUM_ONE
     WHERE DATE >= '{start_month}'
     UNION ALL
-    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
+    SELECT DATE, 'grantees' AS CATEGORY, ACTIVE_WALLETS FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
     WHERE DATE >= '{start_month}'
     ORDER BY DATE 
     ''',
