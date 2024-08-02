@@ -88,15 +88,11 @@ def overview():
 
     gas_pct_stat = [{"PCT_GAS_SPEND": cards_query[0]["PCT_GAS_SPEND"]}]
 
-    # gas_spend_chart = execute_sql('''
-    # SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_GAS_SPEND
-    # WHERE DATE >= '2024-01-01'
-    # ORDER BY DATE
-    # ''',
-    #                               time=timeframe)
-
     tvl_chart = execute_sql('''
-    SELECT DATE, CATEGORY, TVL FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL
+    SELECT DATE, 'total' AS CATEGORY, TVL FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_{time}_TVL_ARBITRUM_ONE
+    WHERE DATE >= '{start_month}'
+    UNION ALL
+    SELECT DATE, 'grantees' AS CATEGORY, TVL FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL
     WHERE DATE >= '{start_month}'
     ORDER BY DATE
     ''',
@@ -104,7 +100,10 @@ def overview():
                             start_month=start_month)
 
     tvl_chart_eth = execute_sql('''
-    SELECT DATE, CATEGORY, TVL_ETH FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL
+    SELECT DATE, 'total' AS CATEGORY, TVL_ETH FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_{time}_TVL_ARBITRUM_ONE
+    WHERE DATE >= '{start_month}'
+    UNION ALL
+    SELECT DATE, 'grantees' AS CATEGORY, TVL_ETH FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL
     WHERE DATE >= '{start_month}'
     ORDER BY DATE
     ''',
@@ -112,26 +111,27 @@ def overview():
                                 start_month=start_month)
 
     tvl_chart_post_grant = execute_sql('''
-    SELECT DATE, CATEGORY, TVL 
+    SELECT DATE, TVL 
     FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL_POST_GRANT
     WHERE DATE >= '{start_month}'
-    AND CATEGORY = 'grantees'
     ORDER BY DATE
     ''',
                                        time=timeframe,
                                        start_month=start_month)
 
     tvl_chart_eth_post_grant = execute_sql('''
-    SELECT DATE, CATEGORY, TVL_ETH
+    SELECT DATE, TVL_ETH
     FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL_POST_GRANT
     WHERE DATE >= '{start_month}'
-    AND CATEGORY = 'grantees'
     ORDER BY DATE
     ''',
                                            time=timeframe,
                                            start_month=start_month)
 
     accounts_chart = execute_sql('''
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_{time}_ACTIVE_WALLETS_ARBITRUM_ONE
+    WHERE DATE >= '{start_month}'
+    UNION ALL
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
     WHERE DATE >= '{start_month}'
     ORDER BY DATE 
@@ -142,7 +142,6 @@ def overview():
     accounts_chart_post_grant = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS_POST_GRANT
     WHERE DATE >= '{start_month}'
-    AND CATEGORY = 'grantees'
     ORDER BY DATE 
     ''',
                                             time=timeframe,
@@ -177,7 +176,6 @@ def overview():
       "tvl_pct_stat": tvl_pct_stat,
       "gas_stat": gas_stat,
       "gas_pct_stat": gas_pct_stat,
-      # "gas_spend_chart": gas_spend_chart,
       "tvl_chart": tvl_chart,
       "tvl_chart_eth": tvl_chart_eth,
       "accounts_chart": accounts_chart,
@@ -222,6 +220,9 @@ def overview():
     AND BLOCK_TIMESTAMP < CURRENT_DATE
     AND BLOCK_TIMESTAMP >= CURRENT_DATE - interval '{time_param}'
     AND c.NAME NOT IN ({exclude_list})
+    INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA m
+    ON m.NAME = c.NAME 
+    AND m.chain = 'Arbitrum One'
     )
     
     SELECT 
@@ -246,9 +247,11 @@ def overview():
     FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA m
     INNER JOIN DEFILLAMA.TVL.HISTORICAL_TVL_PER_CHAIN h
     ON h.CHAIN = 'Arbitrum'
-    AND h.DATE = current_date
-    AND h.PROTOCOL_NAME = LLAMA_NAME
+    AND date_trunc('day',h.NEAREST_DATE) = current_date
+    AND LLAMA_NAME != ''
+    AND h.PROTOCOL_NAME LIKE LLAMA_NAME || '%'
     AND m.NAME NOT IN ({exclude_list})
+    AND m.CHAIN = 'Arbitrum One'
     )
     
     SELECT 
@@ -277,61 +280,32 @@ def overview():
     tvl_query = execute_sql('''
     with total AS (
     SELECT 
-    TO_VARCHAR(DATE_TRUNC('{time}',DATE), 'YYYY-MM-DD') AS date,
+    DATE,
     'total' as category,
-    LAST_VALUE(TVL) OVER (PARTITION BY DATE_TRUNC('{time}', DATE) ORDER BY DATE) AS TVL
-    FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_TOTAL_TVL
+    TVL,
+    TVL_ETH
+    FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_{time}_TVL_ARBITRUM_ONE
     WHERE DATE < DATE_TRUNC('day',CURRENT_DATE())
     AND DATE >= to_timestamp('{start_month}', 'yyyy-MM-dd')
-    QUALIFY ROW_NUMBER() OVER (PARTITION BY DATE_TRUNC('{time}', DATE) ORDER BY DATE DESC) = 1
     )
 
     , grantees AS (
     SELECT 
-    TO_VARCHAR(DATE_TRUNC('{time}',DATE), 'YYYY-MM-DD') AS date,
-    category,
-    LAST_VALUE(TVL) OVER (PARTITION BY DATE_TRUNC('{time}', DATE) ORDER BY DATE) AS TVL
-    FROM (
-    SELECT 
     DATE,
     'grantees' as category,
-    SUM(h.TOTAL_LIQUIDITY_USD) AS TVL
-    FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA m
-    INNER JOIN DEFILLAMA.TVL.HISTORICAL_TVL_PER_CHAIN h
-    ON h.CHAIN = 'Arbitrum'
-    AND h.PROTOCOL_NAME = LLAMA_NAME
+    SUM(TVL) AS TVL,
+    SUM(TVL_ETH) AS TVL_ETH
+    FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL_BY_PROJECT
+    WHERE NAME NOT IN ({exclude_list})
     AND DATE < DATE_TRUNC('day',CURRENT_DATE())
     AND DATE >= to_timestamp('{start_month}', 'yyyy-MM-dd')
-    AND m.NAME NOT IN ({exclude_list})
-    GROUP BY 1,2)
-    QUALIFY ROW_NUMBER() OVER (PARTITION BY DATE_TRUNC('{time}', DATE) ORDER BY DATE DESC) = 1
+    GROUP BY 1,2
     )
 
-    , prices AS (
-    SELECT 
-    DATE_TRUNC('{time}',HOUR) AS date,
-    LAST_VALUE(USD_PRICE) OVER (PARTITION BY DATE_TRUNC('{time}', HOUR) ORDER BY HOUR) AS USD_PRICE
-    FROM COMMON.PRICES.TOKEN_PRICES_HOURLY_EASY
-    WHERE SYMBOL = 'ETH'
-    AND HOUR >= to_timestamp('{start_month}', 'yyyy-MM-dd')
-    QUALIFY ROW_NUMBER() OVER (PARTITION BY DATE_TRUNC('{time}', DATE) ORDER BY HOUR DESC) = 1
-    )
-
-    , merged AS (
     SELECT * FROM total
     UNION ALL 
     SELECT * FROM grantees
     ORDER BY DATE
-    )
-
-    SELECT 
-    m.DATE,
-    m.CATEGORY,
-    m.TVL,
-    m.TVL/p.USD_PRICE AS TVL_ETH
-    FROM merged m
-    LEFT JOIN prices p
-    ON m.DATE = p.DATE
     ''',
                             time=timeframe,
                             start_month=start_month,
@@ -349,26 +323,23 @@ def overview():
     accounts_chart = execute_sql('''
     with total AS (
     SELECT 
-    TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
+    DATE,
     'total' as category,
-    COUNT(DISTINCT FROM_ADDRESS) AS active_wallets
-    FROM ARBITRUM.RAW.TRANSACTIONS
+    ACTIVE_WALLETS
+    FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_{time}_ACTIVE_WALLETS_ARBITRUM_ONE
     WHERE BLOCK_TIMESTAMP < DATE_TRUNC('{time}',CURRENT_DATE())
     AND BLOCK_TIMESTAMP >= to_timestamp('{start_month}', 'yyyy-MM-dd')
-    GROUP BY 1,2
     )
 
     , grantees AS (
     SELECT 
-    TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
+    DATW,
     'grantees' as category,
-    COUNT(DISTINCT FROM_ADDRESS) AS active_wallets
-    FROM ARBITRUM.RAW.TRANSACTIONS t
-    INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
-    ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
-    AND BLOCK_TIMESTAMP < DATE_TRUNC('{time}',CURRENT_DATE())
+    SUM(ACTIVE_WALLETS) AS ACTIVE_WALLETS
+    FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS_BY_PROJECT
+    WHERE BLOCK_TIMESTAMP < DATE_TRUNC('{time}',CURRENT_DATE())
     AND BLOCK_TIMESTAMP >= to_timestamp('{start_month}', 'yyyy-MM-dd')
-    AND c.NAME NOT IN ({exclude_list})
+    AND NAME NOT IN ({exclude_list})
     GROUP BY 1,2
     )
 
@@ -384,15 +355,12 @@ def overview():
     tvl_pie = execute_sql('''
     WITH cte AS (
       SELECT 
-        m.NAME,
-        h.TOTAL_LIQUIDITY_USD AS TVL,
-        SUM(h.TOTAL_LIQUIDITY_USD) OVER () AS TOTAL_TVL
-      FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA m
-      INNER JOIN DEFILLAMA.TVL.HISTORICAL_TVL_PER_CHAIN h
-      ON h.CHAIN = 'Arbitrum'
-        AND h.PROTOCOL_NAME = LLAMA_NAME
-        AND DATE = CURRENT_DATE
-        AND m.NAME NOT IN ({exclude_list})
+        NAME,
+        TVL,
+        SUM(TVL) OVER () AS TOTAL_TVL
+      FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_DAY_TVL_BY_PROJECT
+      WHERE DATE = TO_VARCHAR(DATE_TRUNC('day',CURRENT_DATE - INTERVAL '1 DAY'), 'YYYY-MM-DD')
+      AND NAME NOT IN ({exclude_list})
     ),
     ranked_cte AS (
       SELECT 
@@ -425,6 +393,9 @@ def overview():
     AND BLOCK_TIMESTAMP < CURRENT_DATE
     AND BLOCK_TIMESTAMP >= CURRENT_DATE - interval '{time_param}'
     AND C.NAME NOT IN ({exclude_list})
+    INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA m
+    ON m.NAME = c.NAME
+    AND m.CHAIN = 'Arbitrum One'
     GROUP BY 1
     ),
     ranked_cte AS (
