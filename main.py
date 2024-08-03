@@ -175,9 +175,7 @@ def overview():
         SUM(tvl) as tvl,
         SUM(volume) as volume
     FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
-    ORDER BY 
-    CASE WHEN project = 'TOTAL' THEN 1 ELSE 0 END,
-    WALLETS DESC
+    ORDER BY WALLETS DESC
     ''',
                               time=timeframe)
 
