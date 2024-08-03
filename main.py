@@ -55,6 +55,7 @@ def overview():
   timeframe = request.args.get('timeframe', 'month')
   timescale = request.args.get('timescale', '6')
   timescale = int(timescale)
+  chain = request.args.get('chain', 'all')
 
   excludes = request.args.getlist('excludes')
   exclude_list = ",".join(f"'{item}'" for item in excludes) if excludes else ""
