@@ -73,9 +73,9 @@ def overview():
     PCT_TVL,
     {time}_GAS_SPEND AS GAS_SPEND,
     PCT_{time}_GAS_SPEND AS PCT_GAS_SPEND
-    FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_SUMMARY
+    FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_SUMMARY
    ''',
-                              time=timeframe)
+                              time=timeframe, chain=chain)
 
     wallets_stat = [{"ACTIVE_WALLETS": cards_query[0]["ACTIVE_WALLETS"]}]
 
@@ -93,72 +93,73 @@ def overview():
     SELECT DATE, 'total' AS CATEGORY, TVL FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_{time}_TVL_ARBITRUM_ONE
     WHERE DATE >= '{start_month}'
     UNION ALL
-    SELECT DATE, 'grantees' AS CATEGORY, TVL FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL
+    SELECT DATE, 'grantees' AS CATEGORY, TVL FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_{time}_TVL
     WHERE DATE >= '{start_month}'
     ORDER BY DATE
     ''',
                             time=timeframe,
-                            start_month=start_month)
+                            start_month=start_month
+                           , chain=chain)
 
     tvl_chart_eth = execute_sql('''
     SELECT DATE, 'total' AS CATEGORY, TVL_ETH FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_{time}_TVL_ARBITRUM_ONE
     WHERE DATE >= '{start_month}'
     UNION ALL
-    SELECT DATE, 'grantees' AS CATEGORY, TVL_ETH FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL
+    SELECT DATE, 'grantees' AS CATEGORY, TVL_ETH FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_{time}_TVL
     WHERE DATE >= '{start_month}'
     ORDER BY DATE
     ''',
                                 time=timeframe,
-                                start_month=start_month)
+                                start_month=start_month, chain=chain)
 
     tvl_chart_post_grant = execute_sql('''
     SELECT DATE, TVL 
-    FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL_POST_GRANT
+    FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_{time}_TVL_POST_GRANT
     WHERE DATE >= '{start_month}'
     ORDER BY DATE
     ''',
                                        time=timeframe,
-                                       start_month=start_month)
+                                       start_month=start_month, chain=chain)
 
     tvl_chart_eth_post_grant = execute_sql('''
     SELECT DATE, TVL_ETH
-    FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_TVL_POST_GRANT
+    FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_{time}_TVL_POST_GRANT
     WHERE DATE >= '{start_month}'
     ORDER BY DATE
     ''',
                                            time=timeframe,
-                                           start_month=start_month)
+                                           start_month=start_month , chain=chain)
 
     accounts_chart = execute_sql('''
     SELECT DATE, 'total' AS CATEGORY, ACTIVE_WALLETS FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_{time}_ACTIVE_WALLETS_ARBITRUM_ONE
     WHERE DATE >= '{start_month}'
     UNION ALL
-    SELECT DATE, 'grantees' AS CATEGORY, ACTIVE_WALLETS FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS
+    SELECT DATE, 'grantees' AS CATEGORY, ACTIVE_WALLETS FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_{time}_ACTIVE_WALLETS
     WHERE DATE >= '{start_month}'
     ORDER BY DATE 
     ''',
                                  time=timeframe,
-                                 start_month=start_month)
+                                 start_month=start_month , chain=chain)
 
     accounts_chart_post_grant = execute_sql('''
-    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS_POST_GRANT
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_{time}_ACTIVE_WALLETS_POST_GRANT
     WHERE DATE >= '{start_month}'
     ORDER BY DATE 
     ''',
                                             time=timeframe,
-                                            start_month=start_month)
+                                            start_month=start_month , chain=chain)
 
     tvl_pie = execute_sql('''
-    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_TVL_PIE
-    ''')
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_TVL_PIE
+    ''', chain=chain)
 
     accounts_pie = execute_sql('''
-    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_WALLETS_PIE
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_{time}_WALLETS_PIE
     ''',
-                               time=timeframe)
+                               time=timeframe , chain=chain)
 
     leaderboard = execute_sql('''
-    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_{time}_LEADERBOARD
     UNION ALL
     SELECT
         'TOTAL' as project,
@@ -177,7 +178,7 @@ def overview():
     FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
     ORDER BY WALLETS DESC
     ''',
-                              time=timeframe)
+                              time=timeframe , chain=chain)
 
     name_list = execute_sql('''
     SELECT NAME FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA
@@ -454,9 +455,7 @@ def overview():
         SUM(tvl) as tvl,
         SUM(volume) as volume
     FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
-    ORDER BY 
-    CASE WHEN project = 'TOTAL' THEN 1 ELSE 0 END,
-    WALLETS DESC
+    ORDER BY WALLETS DESC
     ''',
                               time=timeframe)
 
