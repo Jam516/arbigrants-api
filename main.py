@@ -180,6 +180,10 @@ def overview():
     ''',
                               time=timeframe , chain=chain)
 
+    milestones = execute_sql('''
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_MILESTONE_SUMMARY
+    ''')
+
     name_list = execute_sql('''
     SELECT NAME FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA
     ''')
@@ -203,6 +207,7 @@ def overview():
       "tvl_pie": tvl_pie,
       "accounts_pie": accounts_pie,
       "leaderboard": leaderboard,
+      "milestones": milestones,
       "name_list": name_list,
     }
 
