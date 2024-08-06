@@ -356,7 +356,7 @@ def overview():
 
     , grantees AS (
     SELECT 
-    DATW,
+    DATE,
     'grantees' as category,
     SUM(ACTIVE_WALLETS) AS ACTIVE_WALLETS
     FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS_BY_PROJECT
