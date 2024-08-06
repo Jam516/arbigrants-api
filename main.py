@@ -350,8 +350,8 @@ def overview():
     'total' as category,
     ACTIVE_WALLETS
     FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_{time}_ACTIVE_WALLETS_ARBITRUM_ONE
-    WHERE BLOCK_TIMESTAMP < DATE_TRUNC('{time}',CURRENT_DATE())
-    AND BLOCK_TIMESTAMP >= to_timestamp('{start_month}', 'yyyy-MM-dd')
+    WHERE DATE < DATE_TRUNC('{time}',CURRENT_DATE())
+    AND DATE >= to_timestamp('{start_month}', 'yyyy-MM-dd')
     )
 
     , grantees AS (
@@ -360,8 +360,8 @@ def overview():
     'grantees' as category,
     SUM(ACTIVE_WALLETS) AS ACTIVE_WALLETS
     FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_ACTIVE_WALLETS_BY_PROJECT
-    WHERE BLOCK_TIMESTAMP < DATE_TRUNC('{time}',CURRENT_DATE())
-    AND BLOCK_TIMESTAMP >= to_timestamp('{start_month}', 'yyyy-MM-dd')
+    WHERE DATE < DATE_TRUNC('{time}',CURRENT_DATE())
+    AND DATE >= to_timestamp('{start_month}', 'yyyy-MM-dd')
     AND NAME NOT IN ({exclude_list})
     GROUP BY 1,2
     )
