@@ -375,6 +375,87 @@ def overview():
                                  start_month=start_month,
                                  exclude_list=exclude_list)
 
+    tvl_post_grant_query = execute_sql('''
+    with grantees AS (
+    SELECT 
+    TO_VARCHAR(DATE_TRUNC('{time}',DATE), 'YYYY-MM-DD') AS date,
+    SUM(TVL) AS TVL
+    FROM 
+    (
+        SELECT
+        DATE,
+        m.GRANT_DATE,
+        h.TOTAL_LIQUIDITY_USD AS TVL,
+        ROW_NUMBER() OVER (PARTITION BY h.PROTOCOL_NAME, DATE ORDER BY h.NEAREST_DATE DESC) AS rn
+        FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA m
+        INNER JOIN DEFILLAMA.TVL.HISTORICAL_TVL_PER_CHAIN h
+        ON h.CHAIN = 'Arbitrum'
+        AND LLAMA_NAME != ''
+        AND h.PROTOCOL_NAME LIKE LLAMA_NAME || '%'
+        AND DATE < DATE_TRUNC('{time}',CURRENT_DATE())
+        AND DATE >= to_timestamp('{start_month}', 'yyyy-MM-dd')
+        AND m.CHAIN = 'Arbitrum One'
+        AND m.NAME NOT IN ({exclude_list})
+    )
+    WHERE DATE >= CASE
+        WHEN TRY_TO_TIMESTAMP(GRANT_DATE, 'MM/DD/YYYY') IS NOT NULL THEN TRY_TO_TIMESTAMP(GRANT_DATE, 'MM/DD/YYYY')
+        ELSE TO_TIMESTAMP('2023-03-01', 'YYYY-MM-DD')
+    END
+    AND rn = 1
+    GROUP BY 1
+    )
+
+    , prices AS (
+    SELECT 
+    DATE_TRUNC('{time}',HOUR) AS date,
+    LAST_VALUE(USD_PRICE) OVER (PARTITION BY DATE_TRUNC('{time}', HOUR) ORDER BY HOUR) AS USD_PRICE
+    FROM COMMON.PRICES.TOKEN_PRICES_HOURLY_EASY
+    WHERE SYMBOL = 'ETH'
+    AND ETHEREUM_ADDRESS = '0x0000000000000000000000000000000000000000'
+    AND HOUR >= to_timestamp('{start_month}', 'yyyy-MM-dd')
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY DATE_TRUNC('{time}', HOUR) ORDER BY HOUR DESC) = 1
+    )
+
+    SELECT 
+    m.DATE,
+    m.TVL,
+    m.TVL/p.USD_PRICE AS TVL_ETH
+    FROM grantees m
+    LEFT JOIN prices p
+    ON m.DATE = p.DATE
+    ''', time=timeframe,
+    exclude_list=exclude_list, start_month=start_month)
+
+    tvl_chart_post_grant = [{
+      k: v
+      for k, v in item.items() if k != 'TVL_ETH'
+    } for item in tvl_post_grant_query]
+    tvl_chart_eth_post_grant = [{
+      k: v
+      for k, v in item.items() if k != 'TVL'
+    } for item in tvl_post_grant_query]
+
+    accounts_chart_post_grant = execute_sql('''
+    SELECT 
+    TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
+    COUNT(DISTINCT FROM_ADDRESS) AS active_wallets
+    FROM {{ source('arbitrum_raw', 'transactions') }} t
+    INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
+    ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
+    AND BLOCK_TIMESTAMP < DATE_TRUNC('{time}',CURRENT_DATE())
+    AND BLOCK_TIMESTAMP >= to_timestamp('{start_month}', 'yyyy-MM-dd')
+    INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA m
+    ON c.NAME = m.NAME
+    AND t.BLOCK_TIMESTAMP >= CASE
+        WHEN TRY_TO_TIMESTAMP(m.GRANT_DATE, 'MM/DD/YYYY') IS NOT NULL THEN TRY_TO_TIMESTAMP(m.GRANT_DATE, 'MM/DD/YYYY')
+        ELSE TO_TIMESTAMP('2023-03-01', 'YYYY-MM-DD')
+    END
+    AND m.CHAIN = 'Arbitrum One'
+    AND m.NAME NOT IN ({exclude_list})
+    GROUP BY 1
+    ''', time=timeframe,
+                                           exclude_list=exclude_list, start_month=start_month)
+
     tvl_pie = execute_sql('''
     WITH cte AS (
       SELECT 
@@ -464,6 +545,10 @@ def overview():
     ''',
                               time=timeframe)
 
+    milestones = execute_sql('''
+    SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_MILESTONE_SUMMARY
+    ''')
+
     name_list = execute_sql('''
     SELECT NAME FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA
     ''')
@@ -481,9 +566,13 @@ def overview():
       "tvl_chart": tvl_chart,
       "tvl_chart_eth": tvl_chart_eth,
       "accounts_chart": accounts_chart,
+      "tvl_chart_post_grant": tvl_chart_post_grant,
+      "tvl_chart_eth_post_grant": tvl_chart_eth_post_grant,
+      "accounts_chart_post_grant": accounts_chart_post_grant,
       "tvl_pie": tvl_pie,
       "accounts_pie": accounts_pie,
       "leaderboard": leaderboard,
+      "milestones": milestones,
       "name_list": name_list,
     }
 
