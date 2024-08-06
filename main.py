@@ -75,7 +75,8 @@ def overview():
     PCT_{time}_GAS_SPEND AS PCT_GAS_SPEND
     FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_SUMMARY
    ''',
-                              time=timeframe, chain=chain)
+                              time=timeframe,
+                              chain=chain)
 
     wallets_stat = [{"ACTIVE_WALLETS": cards_query[0]["ACTIVE_WALLETS"]}]
 
@@ -98,8 +99,8 @@ def overview():
     ORDER BY DATE
     ''',
                             time=timeframe,
-                            start_month=start_month
-                           , chain=chain)
+                            start_month=start_month,
+                            chain=chain)
 
     tvl_chart_eth = execute_sql('''
     SELECT DATE, 'total' AS CATEGORY, TVL_ETH FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_{time}_TVL_ARBITRUM_ONE
@@ -110,7 +111,8 @@ def overview():
     ORDER BY DATE
     ''',
                                 time=timeframe,
-                                start_month=start_month, chain=chain)
+                                start_month=start_month,
+                                chain=chain)
 
     tvl_chart_post_grant = execute_sql('''
     SELECT DATE, TVL 
@@ -119,7 +121,8 @@ def overview():
     ORDER BY DATE
     ''',
                                        time=timeframe,
-                                       start_month=start_month, chain=chain)
+                                       start_month=start_month,
+                                       chain=chain)
 
     tvl_chart_eth_post_grant = execute_sql('''
     SELECT DATE, TVL_ETH
@@ -128,7 +131,8 @@ def overview():
     ORDER BY DATE
     ''',
                                            time=timeframe,
-                                           start_month=start_month , chain=chain)
+                                           start_month=start_month,
+                                           chain=chain)
 
     accounts_chart = execute_sql('''
     SELECT DATE, 'total' AS CATEGORY, ACTIVE_WALLETS FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_{time}_ACTIVE_WALLETS_ARBITRUM_ONE
@@ -139,7 +143,8 @@ def overview():
     ORDER BY DATE 
     ''',
                                  time=timeframe,
-                                 start_month=start_month , chain=chain)
+                                 start_month=start_month,
+                                 chain=chain)
 
     accounts_chart_post_grant = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_{time}_ACTIVE_WALLETS_POST_GRANT
@@ -147,16 +152,19 @@ def overview():
     ORDER BY DATE 
     ''',
                                             time=timeframe,
-                                            start_month=start_month , chain=chain)
+                                            start_month=start_month,
+                                            chain=chain)
 
     tvl_pie = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_TVL_PIE
-    ''', chain=chain)
+    ''',
+                          chain=chain)
 
     accounts_pie = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_{time}_WALLETS_PIE
     ''',
-                               time=timeframe , chain=chain)
+                               time=timeframe,
+                               chain=chain)
 
     leaderboard = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_{time}_LEADERBOARD
@@ -178,7 +186,8 @@ def overview():
     FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
     ORDER BY WALLETS DESC
     ''',
-                              time=timeframe , chain=chain)
+                              time=timeframe,
+                              chain=chain)
 
     milestones = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_MILESTONE_SUMMARY
@@ -423,8 +432,10 @@ def overview():
     FROM grantees m
     LEFT JOIN prices p
     ON m.DATE = p.DATE
-    ''', time=timeframe,
-    exclude_list=exclude_list, start_month=start_month)
+    ''',
+                                       time=timeframe,
+                                       exclude_list=exclude_list,
+                                       start_month=start_month)
 
     tvl_chart_post_grant = [{
       k: v
@@ -439,7 +450,7 @@ def overview():
     SELECT 
     TO_VARCHAR(DATE_TRUNC('{time}',BLOCK_TIMESTAMP), 'YYYY-MM-DD') AS date,
     COUNT(DISTINCT FROM_ADDRESS) AS active_wallets
-    FROM {{ source('arbitrum_raw', 'transactions') }} t
+    FROM ARBITRUM.RAW.TRANSACTIONS t
     INNER JOIN ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_CONTRACTS c
     ON c.CONTRACT_ADDRESS = t.TO_ADDRESS
     AND BLOCK_TIMESTAMP < DATE_TRUNC('{time}',CURRENT_DATE())
@@ -453,8 +464,10 @@ def overview():
     AND m.CHAIN = 'Arbitrum One'
     AND m.NAME NOT IN ({exclude_list})
     GROUP BY 1
-    ''', time=timeframe,
-                                           exclude_list=exclude_list, start_month=start_month)
+    ''',
+                                            time=timeframe,
+                                            exclude_list=exclude_list,
+                                            start_month=start_month)
 
     tvl_pie = execute_sql('''
     WITH cte AS (
