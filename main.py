@@ -693,6 +693,13 @@ def entity():
     ''',
                              grantee_name=grantee_name)
 
+  milestones = execute_sql('''
+  SELECT MILESTONES_COMPLETED, TOTAL_MILESTONES
+  FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_MILESTONES
+  WHERE NAME = '{grantee_name}'
+  ''',
+                           grantee_name=grantee_name)
+
   response_data = {
     "info": info,
     "wallets_chart": wallets_chart,
@@ -701,7 +708,8 @@ def entity():
     "tvl_chart": tvl_chart,
     "llama_bool": llama_bool,
     "grant_date_bool": grant_date_bool,
-    "grant_date": grant_date
+    "grant_date": grant_date,
+    "milestones": milestones
   }
 
   return jsonify(response_data)
