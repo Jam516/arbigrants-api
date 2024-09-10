@@ -655,7 +655,7 @@ def entity():
   ELSE 0
   END AS LLAMA_COUNT
   FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA
-  WHERE NAME = '{grantee_name}'
+  WHERE LOWER(NAME) = LOWER('{grantee_name}')
   ''',
                            grantee_name=grantee_name)
 
