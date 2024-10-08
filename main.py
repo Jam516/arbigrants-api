@@ -168,22 +168,6 @@ def overview():
 
     leaderboard = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_{time}_LEADERBOARD
-    UNION ALL
-    SELECT
-        'TOTAL' as project,
-        'Total' as category,
-        'total' as slug,
-        'https://aefsitlkirjpwxayubwd.supabase.co/storage/v1/object/public/Arbigrants%20logos/AF_logomark.png?t=2024-07-03T10%3A53%3A13.645Z' as logo,
-        '' as chain,
-        SUM(ETH_FEES) as ETH_FEES,
-        0 as ETH_FEES_GROWTH,
-        SUM(TRANSACTIONS) as TRANSACTIONS,
-        0 as TRANSACTIONS_GROWTH,
-        SUM(WALLETS) as WALLETS,
-        0 as WALLETS_GROWTH,
-        SUM(tvl) as tvl,
-        SUM(volume) as volume
-    FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
     ORDER BY WALLETS DESC
     ''',
                               time=timeframe,
@@ -538,22 +522,6 @@ def overview():
 
     leaderboard = execute_sql('''
     SELECT * FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
-    UNION ALL
-    SELECT
-        'TOTAL' as project,
-        'Total' as category,
-        'total' as slug,
-        'https://aefsitlkirjpwxayubwd.supabase.co/storage/v1/object/public/Arbigrants%20logos/AF_logomark.png?t=2024-07-03T10%3A53%3A13.645Z' as logo,
-        '' as chain,
-        SUM(ETH_FEES) as ETH_FEES,
-        0 as ETH_FEES_GROWTH,
-        SUM(TRANSACTIONS) as TRANSACTIONS,
-        0 as TRANSACTIONS_GROWTH,
-        SUM(WALLETS) as WALLETS,
-        0 as WALLETS_GROWTH,
-        SUM(tvl) as tvl,
-        SUM(volume) as volume
-    FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_{time}_LEADERBOARD
     ORDER BY WALLETS DESC
     ''',
                               time=timeframe)
