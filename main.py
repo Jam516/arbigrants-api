@@ -683,5 +683,28 @@ def entity():
   return jsonify(response_data)
 
 
+@app.route('/grantee-public')
+@cache.memoize(make_name=make_cache_key)
+def entitypublic():
+  grantee_name = request.args.get('grantee_name', 'pendle')
+
+  info = execute_sql('''
+  SELECT 
+  NAME,
+  LOGO,
+  DESCRIPTION,
+  WEBSITE,
+  TWITTER,
+  DUNE
+  FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA
+  WHERE NAME = '{grantee_name}'
+  ''',
+                     grantee_name=grantee_name)
+
+  response_data = {"info": info}
+
+  return jsonify(response_data)
+
+
 if __name__ == '__main__':
   app.run(host='0.0.0.0', port=81)
