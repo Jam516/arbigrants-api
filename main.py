@@ -70,7 +70,6 @@ def overview():
     SELECT {time}_ACTIVE_WALLETS AS ACTIVE_WALLETS,
     PCT_{time}_ACTIVE_WALLETS AS PCT_WALLETS,
     TVL_GRANTEES,
-    PCT_TVL,
     {time}_GAS_SPEND AS GAS_SPEND,
     PCT_{time}_GAS_SPEND AS PCT_GAS_SPEND
     FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_SUMMARY
@@ -84,16 +83,13 @@ def overview():
 
     tvl_stat = [{"TVL_GRANTEES": cards_query[0]["TVL_GRANTEES"]}]
 
-    tvl_pct_stat = [{"PCT_TVL": cards_query[0]["PCT_TVL"]}]
+    # tvl_pct_stat = [{"PCT_TVL": cards_query[0]["PCT_TVL"]}]
 
     gas_stat = [{"GAS_SPEND": cards_query[0]["GAS_SPEND"]}]
 
     gas_pct_stat = [{"PCT_GAS_SPEND": cards_query[0]["PCT_GAS_SPEND"]}]
 
     tvl_chart = execute_sql('''
-    SELECT DATE, 'total' AS CATEGORY, TVL FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_{time}_TVL_ARBITRUM_ONE
-    WHERE DATE >= '{start_month}'
-    UNION ALL
     SELECT DATE, 'grantees' AS CATEGORY, TVL FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_{time}_TVL
     WHERE DATE >= '{start_month}'
     ORDER BY DATE
@@ -103,9 +99,6 @@ def overview():
                             chain=chain)
 
     tvl_chart_eth = execute_sql('''
-    SELECT DATE, 'total' AS CATEGORY, TVL_ETH FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_{time}_TVL_ARBITRUM_ONE
-    WHERE DATE >= '{start_month}'
-    UNION ALL
     SELECT DATE, 'grantees' AS CATEGORY, TVL_ETH FROM ARBIGRANTS.DBT.ARBIGRANTS_{chain}_{time}_TVL
     WHERE DATE >= '{start_month}'
     ORDER BY DATE
@@ -188,7 +181,7 @@ def overview():
       "wallets_stat": wallets_stat,
       "wallets_pct_stat": wallets_pct_stat,
       "tvl_stat": tvl_stat,
-      "tvl_pct_stat": tvl_pct_stat,
+      # "tvl_pct_stat": tvl_pct_stat,
       "gas_stat": gas_stat,
       "gas_pct_stat": gas_pct_stat,
       "tvl_chart": tvl_chart,
@@ -250,14 +243,7 @@ def overview():
     ),
 
     stats_tvl AS (
-    WITH all_tvl AS (
-    SELECT 
-    TVL AS tvl_all
-    FROM ARBIGRANTS.DBT.ARBIGRANTS_ONE_TOTAL_TVL
-    WHERE DATE = current_date
-    ),
-    
-    grantee_tvl AS (
+    WITH grantee_tvl AS (
     SELECT 
     SUM(h.TOTAL_LIQUIDITY_USD) AS tvl_grantees
     FROM ARBIGRANTS.DBT.ARBIGRANTS_LABELS_PROJECT_METADATA m
@@ -271,9 +257,8 @@ def overview():
     )
     
     SELECT 
-    tvl_grantees,
-    tvl_grantees/tvl_all as pct_tvl
-    FROM all_tvl, grantee_tvl
+    tvl_grantees
+    FROM grantee_tvl
     )
 
     SELECT * FROM stats_gen, stats_tvl
@@ -287,25 +272,14 @@ def overview():
 
     tvl_stat = [{"TVL_GRANTEES": cards_query[0]["TVL_GRANTEES"]}]
 
-    tvl_pct_stat = [{"PCT_TVL": cards_query[0]["PCT_TVL"]}]
+    # tvl_pct_stat = [{"PCT_TVL": cards_query[0]["PCT_TVL"]}]
 
     gas_stat = [{"GAS_SPEND": cards_query[0]["GAS_SPEND"]}]
 
     gas_pct_stat = [{"PCT_GAS_SPEND": cards_query[0]["PCT_GAS_SPEND"]}]
 
     tvl_query = execute_sql('''
-    with total AS (
-    SELECT 
-    DATE,
-    'total' as category,
-    TVL,
-    TVL_ETH
-    FROM ARBIGRANTS.DBT.ARBIGRANTS_ALL_{time}_TVL_ARBITRUM_ONE
-    WHERE DATE < DATE_TRUNC('day',CURRENT_DATE())
-    AND DATE >= to_timestamp('{start_month}', 'yyyy-MM-dd')
-    )
-
-    , grantees AS (
+    with grantees AS (
     SELECT 
     DATE,
     'grantees' as category,
@@ -318,8 +292,6 @@ def overview():
     GROUP BY 1,2
     )
 
-    SELECT * FROM total
-    UNION ALL 
     SELECT * FROM grantees
     ORDER BY DATE
     ''',
@@ -541,7 +513,7 @@ def overview():
       "wallets_stat": wallets_stat,
       "wallets_pct_stat": wallets_pct_stat,
       "tvl_stat": tvl_stat,
-      "tvl_pct_stat": tvl_pct_stat,
+      # "tvl_pct_stat": tvl_pct_stat,
       "gas_stat": gas_stat,
       "gas_pct_stat": gas_pct_stat,
       "tvl_chart": tvl_chart,
